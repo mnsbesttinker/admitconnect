@@ -94,7 +94,14 @@ const availabilitySlots: AvailabilitySlot[] = [
     startTimeUtc: "2026-03-03T13:00:00.000Z",
     endTimeUtc: "2026-03-03T13:15:00.000Z",
     isBooked: false
-  }
+  },
+  {
+    id: "s4",
+    mentorId: "david-duke",
+    startTimeUtc: "2026-03-04T19:00:00.000Z",
+    endTimeUtc: "2026-03-04T19:45:00.000Z",
+    isBooked: false
+  },
 ];
 
 const pendingOnboarding: Array<MentorOnboardingRequest & { id: string; verificationStatus: "pending" }> = [];
