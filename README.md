@@ -55,6 +55,24 @@ npm run dev
 
 Then open `http://localhost:3000`.
 
+
+## Implemented API endpoints (current milestone)
+
+The following App Router endpoints are now available with seed/in-memory data:
+
+- `GET /api/mentors` (supports `major`, `language`, `tag`, `q` query filters)
+- `GET /api/mentors/:id`
+- `GET /api/mentors/:id/reviews`
+- `GET /api/mentors/:id/availability`
+- `POST /api/mentors/onboard`
+- `POST /api/reviews`
+
+Example:
+
+```bash
+curl "http://localhost:3000/api/mentors?language=english"
+```
+
 ## MVP scope guardrails
 
 Not included in first release:
