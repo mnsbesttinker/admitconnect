@@ -59,3 +59,18 @@ a {
 .muted {
   color: #4b5f76;
 }
+
+input,
+select {
+  border: 1px solid #c9d6ea;
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+  margin-top: 0.2rem;
+}
+
+pre {
+  background: #f3f6fb;
+  border: 1px solid #d8e1ef;
+  border-radius: 8px;
+  padding: 0.7rem;
+}

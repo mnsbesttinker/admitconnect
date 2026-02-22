@@ -10,6 +10,8 @@ This repository now includes a runnable **Next.js app scaffold** with:
 - Mentor directory (seeded mentors)
 - Mentor profile pages
 - Pricing page with fixed session menu
+- Booking flow tester page (`/book`)
+- Applicant and mentor dashboard stubs (`/applicant`, `/mentor/dashboard`)
 - Initial Prisma schema for core marketplace entities
 
 ## MVP goals
@@ -54,6 +56,36 @@ npm run dev
 ```
 
 Then open `http://localhost:3000`.
+
+
+## Implemented API endpoints (current milestone)
+
+The following App Router endpoints are now available with seed/in-memory data:
+
+- `GET /api/mentors` (supports `major`, `language`, `tag`, `q` query filters)
+- `GET /api/mentors/:id`
+- `GET /api/mentors/:id/reviews`
+- `GET /api/mentors/:id/availability`
+- `POST /api/mentors/onboard`
+- `POST /api/reviews`
+- `POST /api/bookings`
+- `GET /api/bookings/my?applicant=...`
+- `GET /api/bookings/mentor?mentorId=...`
+- `POST /api/bookings/:id/cancel`
+- `POST /api/bookings/:id/complete`
+- `POST /api/payments/create-intent`
+- `POST /api/payments/webhook` (mock Stripe-style event)
+
+Example:
+
+```bash
+curl "http://localhost:3000/api/mentors?language=english"
+
+# create booking
+curl -X POST http://localhost:3000/api/bookings \
+  -H "content-type: application/json" \
+  -d '{"applicantName":"Tymur","mentorId":"nora-mit","sessionTypeId":"deep-dive","startTimeUtc":"2026-03-01T15:00:00.000Z"}'
+```
 
 ## MVP scope guardrails
 
