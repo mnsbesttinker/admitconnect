@@ -20,6 +20,8 @@ export default function RootLayout({
           <nav style={{ display: "flex", gap: "1rem" }}>
             <Link href="/mentors">Find a mentor</Link>
             <Link href="/pricing">Pricing</Link>
+            <Link href="/faq">FAQ</Link>
+            <Link href="/trust-safety">Trust</Link>
             <Link href="/book">Book</Link>
             <Link href="/applicant">Applicant</Link>
             <Link href="/mentor/dashboard">Mentor</Link>

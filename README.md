@@ -10,6 +10,7 @@ This repository now includes a runnable **Next.js app scaffold** with:
 - Mentor directory (seeded mentors)
 - Mentor profile pages
 - Pricing page with fixed session menu
+- FAQ + Trust & Safety + policy placeholders
 - Booking flow tester page (`/book`)
 - Applicant and mentor dashboard stubs (`/applicant`, `/mentor/dashboard`)
 - Initial Prisma schema for core marketplace entities
