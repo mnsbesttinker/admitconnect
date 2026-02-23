@@ -35,6 +35,8 @@ This repository includes a runnable Next.js scaffold with:
 
 - Public pages (home, mentors, pricing, FAQ, trust/policy placeholders)
 - Booking flow tester UI (`/book`)
+- Tutor application page (`/tutor/apply`) with profile, hourly rate, and credential document submission
+- Admin verification page (`/admin/verification`) for approve/reject decisions
 - Applicant and mentor dashboard stubs
 - Seed/in-memory API routes for mentors, availability, bookings, payments, reviews, onboarding
 - Initial Prisma schema baseline in `prisma/schema.prisma`
@@ -89,6 +91,9 @@ Open `http://localhost:3000`.
 - `GET /api/mentors/:id/reviews`
 - `GET /api/mentors/:id/availability`
 - `POST /api/mentors/onboard`
+- `GET /api/admin/mentors/pending`
+- `POST /api/admin/mentors/:id/approve`
+- `POST /api/admin/mentors/:id/reject`
 - `POST /api/reviews`
 - `POST /api/bookings`
 - `GET /api/bookings/my?applicant=...`

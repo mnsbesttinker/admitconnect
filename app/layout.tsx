@@ -25,6 +25,8 @@ export default function RootLayout({
             <Link href="/book">Book</Link>
             <Link href="/applicant">Applicant</Link>
             <Link href="/mentor/dashboard">Mentor</Link>
+            <Link href="/tutor/apply">Tutor Apply</Link>
+            <Link href="/admin/verification">Admin</Link>
           </nav>
         </header>
         <main>{children}</main>

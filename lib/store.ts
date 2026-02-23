@@ -25,6 +25,16 @@ export type MentorOnboardingRequest = {
   bio: string;
   languages: string[];
   credibilityTags: string[];
+  hourlyRateUsd: number;
+  offeringSummary: string;
+  credentialDocuments: string[];
+};
+
+export type MentorOnboardingSubmission = MentorOnboardingRequest & {
+  id: string;
+  verificationStatus: "pending" | "approved" | "rejected";
+  adminNotes?: string;
+  createdAt: string;
 };
 
 export type BookingStatus = "pending" | "paid" | "confirmed" | "completed" | "cancelled";
@@ -54,7 +64,20 @@ export type PaymentRecord = {
   createdAt: string;
 };
 
-const reviews: Review[] = [
+const PLATFORM_COMMISSION_PCT = 0.05;
+
+type InMemoryState = {
+  reviews: Review[];
+  availabilitySlots: AvailabilitySlot[];
+  onboardingSubmissions: MentorOnboardingSubmission[];
+  bookings: Booking[];
+  payments: PaymentRecord[];
+};
+
+const globalStore = globalThis as typeof globalThis & { __admitConnectStore?: InMemoryState };
+
+const defaultState: InMemoryState = {
+  reviews: [
   {
     id: "r1",
     mentorId: "nora-mit",
@@ -71,9 +94,8 @@ const reviews: Review[] = [
     text: "Great essay framing feedback in one call.",
     createdAt: new Date().toISOString()
   }
-];
-
-const availabilitySlots: AvailabilitySlot[] = [
+] ,
+  availabilitySlots: [
   {
     id: "s1",
     mentorId: "nora-mit",
@@ -101,12 +123,18 @@ const availabilitySlots: AvailabilitySlot[] = [
     startTimeUtc: "2026-03-04T19:00:00.000Z",
     endTimeUtc: "2026-03-04T19:45:00.000Z",
     isBooked: false
-  },
-];
+  }
+] ,
+  onboardingSubmissions: [],
+  bookings: [],
+  payments: []
+};
 
-const pendingOnboarding: Array<MentorOnboardingRequest & { id: string; verificationStatus: "pending" }> = [];
-const bookings: Booking[] = [];
-const payments: PaymentRecord[] = [];
+if (!globalStore.__admitConnectStore) {
+  globalStore.__admitConnectStore = defaultState;
+}
+
+const { reviews, availabilitySlots, onboardingSubmissions, bookings, payments } = globalStore.__admitConnectStore;
 
 export function listMentors(filters: { major?: string; language?: string; tag?: string; query?: string }): Mentor[] {
   return mentors.filter((mentor) => {
@@ -147,14 +175,30 @@ export function listAvailabilityForMentor(mentorId: string): AvailabilitySlot[] 
   return availabilitySlots.filter((slot) => slot.mentorId === mentorId);
 }
 
-export function submitMentorOnboarding(payload: MentorOnboardingRequest) {
-  const record = {
+export function submitMentorOnboarding(payload: MentorOnboardingRequest): MentorOnboardingSubmission {
+  const record: MentorOnboardingSubmission = {
     id: crypto.randomUUID(),
-    verificationStatus: "pending" as const,
+    verificationStatus: "pending",
+    createdAt: new Date().toISOString(),
     ...payload
   };
 
-  pendingOnboarding.push(record);
+  onboardingSubmissions.push(record);
+  return record;
+}
+
+export function listPendingOnboarding() {
+  return onboardingSubmissions.filter((submission) => submission.verificationStatus === "pending");
+}
+
+export function decideOnboarding(id: string, decision: "approved" | "rejected", adminNotes?: string) {
+  const record = onboardingSubmissions.find((submission) => submission.id === id);
+  if (!record) {
+    return null;
+  }
+
+  record.verificationStatus = decision;
+  record.adminNotes = adminNotes;
   return record;
 }
 
@@ -212,7 +256,9 @@ export function cancelBooking(id: string) {
   }
 
   booking.status = "cancelled";
-  const slot = availabilitySlots.find((entry) => entry.mentorId === booking.mentorId && entry.startTimeUtc === booking.startTimeUtc);
+  const slot = availabilitySlots.find(
+    (entry) => entry.mentorId === booking.mentorId && entry.startTimeUtc === booking.startTimeUtc
+  );
   if (slot) {
     slot.isBooked = false;
   }
@@ -242,7 +288,7 @@ export function createPaymentIntent(bookingId: string) {
   }
 
   const amountTotal = sessionType.priceUsd;
-  const platformFeeAmount = Math.round(amountTotal * 0.2);
+  const platformFeeAmount = Math.round(amountTotal * PLATFORM_COMMISSION_PCT);
   const mentorPayoutAmount = amountTotal - platformFeeAmount;
 
   const payment: PaymentRecord = {
