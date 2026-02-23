@@ -9,7 +9,11 @@ function isValidPayload(body: Partial<MentorOnboardingRequest>) {
       body.major &&
       body.bio &&
       Array.isArray(body.languages) &&
-      Array.isArray(body.credibilityTags)
+      Array.isArray(body.credibilityTags) &&
+      typeof body.hourlyRateUsd === "number" &&
+      body.hourlyRateUsd > 0 &&
+      body.offeringSummary &&
+      Array.isArray(body.credentialDocuments)
   );
 }
 
