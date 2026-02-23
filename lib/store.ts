@@ -27,6 +27,7 @@ export type MentorOnboardingRequest = {
   credibilityTags: string[];
   hourlyRateUsd: number;
   offeringSummary: string;
+  profilePhotoFileName: string;
   credentialDocuments: string[];
 };
 

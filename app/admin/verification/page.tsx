@@ -8,6 +8,7 @@ type Submission = {
   university: string;
   hourlyRateUsd: number;
   offeringSummary: string;
+  profilePhotoFileName: string;
   credentialDocuments: string[];
 };
 
@@ -61,10 +62,12 @@ export default function AdminVerificationPage() {
             <h3 style={{ marginTop: 0 }}>{submission.name}</h3>
             <p className="muted">{submission.university} · ${submission.hourlyRateUsd}/hr</p>
             <p>{submission.offeringSummary}</p>
+            <h4>Profile photo</h4>
+            <p className="muted">{submission.profilePhotoFileName}</p>
             <h4>Credential documents</h4>
             <ul>
               {submission.credentialDocuments.map((documentUrl) => (
-                <li key={documentUrl}><a href={documentUrl} target="_blank">{documentUrl}</a></li>
+                <li key={documentUrl}>{documentUrl}</li>
               ))}
             </ul>
             <div style={{ display: "flex", gap: "0.5rem" }}>

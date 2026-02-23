@@ -75,3 +75,51 @@ pre {
   border-radius: 8px;
   padding: 0.7rem;
 }
+
+.top-nav {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.nav-menu {
+  position: relative;
+}
+
+.nav-trigger {
+  border: 1px solid #d8e1ef;
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.45rem 0.7rem;
+  font-weight: 600;
+  color: #233a54;
+}
+
+.nav-dropdown {
+  position: absolute;
+  display: none;
+  min-width: 190px;
+  top: 105%;
+  right: 0;
+  background: #fff;
+  border: 1px solid #d8e1ef;
+  border-radius: 10px;
+  padding: 0.4rem;
+  z-index: 20;
+  box-shadow: 0 8px 20px rgba(9, 30, 66, 0.12);
+}
+
+.nav-menu:hover .nav-dropdown,
+.nav-menu:focus-within .nav-dropdown {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.nav-dropdown-link {
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+}
+
+.nav-dropdown-link:hover {
+  background: #f3f6fb;
+}
