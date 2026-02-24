@@ -34,7 +34,8 @@ This repository should now prioritize the following functionality:
 This repository includes a runnable Next.js scaffold with:
 
 - Public pages (home, mentors, pricing, FAQ, trust/policy placeholders)
-- Top nav grouped into: For Students, For Tutors, About Us, and Sign Up / Login
+- Click-based dropdown navigation grouped into 4 top-level categories for cleaner UX
+- Marketing-focused landing content emphasizing aid-first affordability positioning
 - Booking flow tester UI (`/book`)
 - Tutor application page (`/tutor/apply`) with standardized field constraints, required profile photo upload, and PDF credential uploads
 - Admin verification page (`/admin/verification`) for approve/reject decisions
