@@ -65,6 +65,24 @@ export type PaymentRecord = {
   createdAt: string;
 };
 
+export type ChatRole = "student" | "tutor";
+
+export type ChatMessage = {
+  id: string;
+  senderRole: ChatRole;
+  senderName: string;
+  text: string;
+  createdAt: string;
+};
+
+export type ChatThread = {
+  id: string;
+  studentName: string;
+  tutorId: string;
+  createdAt: string;
+  messages: ChatMessage[];
+};
+
 const PLATFORM_COMMISSION_PCT = 0.05;
 
 type InMemoryState = {
@@ -73,6 +91,7 @@ type InMemoryState = {
   onboardingSubmissions: MentorOnboardingSubmission[];
   bookings: Booking[];
   payments: PaymentRecord[];
+  chats: ChatThread[];
 };
 
 const globalStore = globalThis as typeof globalThis & { __admitConnectStore?: InMemoryState };
@@ -128,14 +147,15 @@ const defaultState: InMemoryState = {
 ] ,
   onboardingSubmissions: [],
   bookings: [],
-  payments: []
+  payments: [],
+  chats: []
 };
 
 if (!globalStore.__admitConnectStore) {
   globalStore.__admitConnectStore = defaultState;
 }
 
-const { reviews, availabilitySlots, onboardingSubmissions, bookings, payments } = globalStore.__admitConnectStore;
+const { reviews, availabilitySlots, onboardingSubmissions, bookings, payments, chats } = globalStore.__admitConnectStore;
 
 export function listMentors(filters: { major?: string; language?: string; tag?: string; query?: string }): Mentor[] {
   return mentors.filter((mentor) => {
@@ -321,4 +341,75 @@ export function markPaymentPaid(providerPaymentIntentId: string) {
   }
 
   return { payment, booking };
+}
+
+
+export function createStudentInitiatedThread(input: { studentName: string; tutorId: string; text: string }) {
+  const tutor = getMentor(input.tutorId);
+  if (!tutor) {
+    return null;
+  }
+
+  const thread: ChatThread = {
+    id: crypto.randomUUID(),
+    studentName: input.studentName,
+    tutorId: input.tutorId,
+    createdAt: new Date().toISOString(),
+    messages: [
+      {
+        id: crypto.randomUUID(),
+        senderRole: "student",
+        senderName: input.studentName,
+        text: input.text,
+        createdAt: new Date().toISOString()
+      }
+    ]
+  };
+
+  chats.push(thread);
+  return thread;
+}
+
+export function listThreadsForStudent(studentName: string) {
+  return chats.filter((thread) => thread.studentName.toLowerCase() === studentName.toLowerCase());
+}
+
+export function listThreadsForTutor(tutorId: string) {
+  return chats.filter((thread) => thread.tutorId === tutorId);
+}
+
+export function addMessageToThread(input: {
+  threadId: string;
+  senderRole: ChatRole;
+  senderName: string;
+  text: string;
+}) {
+  const thread = chats.find((entry) => entry.id === input.threadId);
+  if (!thread) {
+    return { error: "Thread not found" as const };
+  }
+
+  if (input.senderRole === "student") {
+    if (thread.studentName.toLowerCase() != input.senderName.toLowerCase()) {
+      return { error: "Student identity mismatch" as const };
+    }
+  }
+
+  if (input.senderRole === "tutor") {
+    const tutor = getMentor(thread.tutorId);
+    if (!tutor || tutor.name.toLowerCase() !== input.senderName.toLowerCase()) {
+      return { error: "Tutor identity mismatch" as const };
+    }
+  }
+
+  const message: ChatMessage = {
+    id: crypto.randomUUID(),
+    senderRole: input.senderRole,
+    senderName: input.senderName,
+    text: input.text,
+    createdAt: new Date().toISOString()
+  };
+
+  thread.messages.push(message);
+  return { thread };
 }

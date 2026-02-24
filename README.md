@@ -40,6 +40,7 @@ This repository includes a runnable Next.js scaffold with:
 - Tutor application page (`/tutor/apply`) with standardized field constraints, required profile photo upload, and PDF credential uploads
 - Admin verification page (`/admin/verification`) for approve/reject decisions
 - Applicant and mentor dashboard stubs
+- Student/tutor message pages enforcing student-initiated conversation flow
 - Seed/in-memory API routes for mentors, availability, bookings, payments, reviews, onboarding
 - Initial Prisma schema baseline in `prisma/schema.prisma`
 
@@ -93,6 +94,9 @@ Open `http://localhost:3000`.
 - `GET /api/mentors/:id/reviews`
 - `GET /api/mentors/:id/availability`
 - `POST /api/mentors/onboard`
+- `GET /api/chat/threads?studentName=...` or `?tutorId=...`
+- `POST /api/chat/threads` (student-initiated only)
+- `POST /api/chat/threads/:id/messages`
 - `GET /api/admin/mentors/pending`
 - `POST /api/admin/mentors/:id/approve`
 - `POST /api/admin/mentors/:id/reject`

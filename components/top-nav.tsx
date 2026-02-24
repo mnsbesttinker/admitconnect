@@ -14,7 +14,8 @@ const navGroups: NavGroup[] = [
       { href: "/mentors", label: "Find a mentor" },
       { href: "/book", label: "Book a session" },
       { href: "/applicant", label: "Student dashboard" },
-      { href: "/pricing", label: "Pricing" }
+      { href: "/pricing", label: "Pricing" },
+      { href: "/messages/student", label: "Student messages" }
     ]
   },
   {
@@ -22,7 +23,8 @@ const navGroups: NavGroup[] = [
     title: "For Tutors",
     items: [
       { href: "/tutor/apply", label: "Tutor application" },
-      { href: "/mentor/dashboard", label: "Tutor dashboard" }
+      { href: "/mentor/dashboard", label: "Tutor dashboard" },
+      { href: "/messages/tutor", label: "Tutor messages" }
     ]
   },
   {
