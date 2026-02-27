@@ -31,7 +31,7 @@ function formatSlot(start: string, end: string) {
 export default function BookingFlow() {
   const [applicantName, setApplicantName] = useState("Tymur");
   const [mentorId, setMentorId] = useState(mentors[0]?.id ?? "");
-  const [sessionTypeId, setSessionTypeId] = useState(sessionTypes[1]?.id ?? "deep-dive");
+  const [sessionTypeId, setSessionTypeId] = useState<string>(sessionTypes[1]?.id ?? "deep-dive");
   const [slot, setSlot] = useState("");
   const [availableSlots, setAvailableSlots] = useState<AvailabilitySlot[]>([]);
   const [booking, setBooking] = useState<BookingResponse | null>(null);

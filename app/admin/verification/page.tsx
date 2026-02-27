@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type Submission = {
   id: string;
@@ -12,12 +12,13 @@ type Submission = {
   credentialDocuments: string[];
 };
 
+const adminHeaders = { "x-user-role": "admin", "x-user-name": "Platform Admin" };
+
 export default function AdminVerificationPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [status, setStatus] = useState("Loading...");
-  const adminHeaders = { "x-user-role": "admin", "x-user-name": "Platform Admin" };
 
-  async function loadPending() {
+  const loadPending = useCallback(async function loadPending() {
     const response = await fetch("/api/admin/mentors/pending", { headers: adminHeaders });
     const data = await response.json();
 
@@ -28,11 +29,11 @@ export default function AdminVerificationPage() {
 
     setSubmissions(data.data);
     setStatus(`Loaded ${data.count} pending submissions`);
-  }
+  }, []);
 
   useEffect(() => {
     void loadPending();
-  }, []);
+  }, [loadPending]);
 
   async function decide(id: string, action: "approve" | "reject") {
     const response = await fetch(`/api/admin/mentors/${id}/${action}`, {

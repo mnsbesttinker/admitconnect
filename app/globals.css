@@ -125,3 +125,31 @@ pre {
 .nav-dropdown-link:hover {
   background: #f3f6fb;
 }
+
+.auth-card {
+  max-width: 460px;
+}
+
+.form-grid {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.form-grid label {
+  display: grid;
+  gap: 0.25rem;
+  font-weight: 600;
+}
+
+.auth-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: 0.25rem;
+}
+
+.btn-subtle {
+  background: #eff4ff;
+  color: #23406b;
+  border: 1px solid #c7d6f2;
+}
