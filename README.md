@@ -113,3 +113,19 @@ Open `http://localhost:3000`.
 
 - The current booking/availability behavior is still seed-data based in memory and resets on dev-server restart.
 - Replacing in-memory stores with database-backed persistence is a top next step.
+
+## Functionality neccessary for production ready grade 
+
+This repository is ready for first users when:
+
+✅ Users can sign up/login and can’t impersonate each other
+
+✅ Mentor verification workflow is secure (docs private)
+
+✅ Booking cannot double-book
+
+✅ Stripe is real, webhooks verified, and booking state transitions are reliable
+
+✅ You can recover from errors (logs + Sentry) and have backups of the DB
+
+✅ There’s a basic refund/cancel path
