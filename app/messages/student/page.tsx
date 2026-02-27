@@ -18,7 +18,7 @@ export default function StudentMessagesPage() {
 
     const response = await fetch("/api/chat/threads", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-user-role": "student", "x-user-name": payload.studentName },
       body: JSON.stringify(payload)
     });
 

@@ -68,31 +68,6 @@ This repository includes a runnable Next.js scaffold with:
 
 6. **Marketing page rewrite**
    - Replace generic hero with conversion-focused messaging aligned to aid-focused international applicants.
-  
-
-Important DB fixes
-
-Your schema currently doesn’t fully match your product:
-
-Tutor hourly rate exists in onboarding payload (hourlyRateUsd) but not in Prisma MentorProfile.
-
-Add hourlyRateUsd Int (or Decimal).
-
-Upload requires bookingId, but tutor verification uploads happen before bookings.
-
-Change uploads so they can attach to either:
-
-mentorUserId (verification docs)
-
-bookingId (session docs)
-
-Decide whether sessions are:
-
-fixed packages (15/45/90) OR
-
-hourly rate chosen by tutor
-
-(Right now we have both concepts floating around.)
 
 ## Stack
 
@@ -138,19 +113,4 @@ Open `http://localhost:3000`.
 
 - The current booking/availability behavior is still seed-data based in memory and resets on dev-server restart.
 - Replacing in-memory stores with database-backed persistence is a top next step.
-
-## Functionality neccessary for production ready grade 
-
-This repository is ready for first users when:
-
-✅ Users can sign up/login and can’t impersonate each other
-
-✅ Mentor verification workflow is secure (docs private)
-
-✅ Booking cannot double-book
-
-✅ Stripe is real, webhooks verified, and booking state transitions are reliable
-
-✅ You can recover from errors (logs + Sentry) and have backups of the DB
-
-✅ There’s a basic refund/cancel path
+- Chat/admin API routes currently use mock header-based role checks (`x-user-role`, `x-user-name`) until full auth is integrated.

@@ -15,9 +15,10 @@ type Submission = {
 export default function AdminVerificationPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [status, setStatus] = useState("Loading...");
+  const adminHeaders = { "x-user-role": "admin", "x-user-name": "Platform Admin" };
 
   async function loadPending() {
-    const response = await fetch("/api/admin/mentors/pending");
+    const response = await fetch("/api/admin/mentors/pending", { headers: adminHeaders });
     const data = await response.json();
 
     if (!response.ok) {
@@ -35,8 +36,8 @@ export default function AdminVerificationPage() {
 
   async function decide(id: string, action: "approve" | "reject") {
     const response = await fetch(`/api/admin/mentors/${id}/${action}`, {
+      headers: { ...adminHeaders, "Content-Type": "application/json" },
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ adminNotes: action === "approve" ? "Approved" : "Rejected" })
     });
 

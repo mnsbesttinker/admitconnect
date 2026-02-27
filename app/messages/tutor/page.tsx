@@ -18,7 +18,7 @@ export default function TutorMessagesPage() {
 
     const response = await fetch(`/api/chat/threads/${threadId}/messages`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-user-role": "tutor", "x-user-name": payload.senderName },
       body: JSON.stringify(payload)
     });
 
