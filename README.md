@@ -68,6 +68,31 @@ This repository includes a runnable Next.js scaffold with:
 
 6. **Marketing page rewrite**
    - Replace generic hero with conversion-focused messaging aligned to aid-focused international applicants.
+  
+
+Important DB fixes
+
+Your schema currently doesn’t fully match your product:
+
+Tutor hourly rate exists in onboarding payload (hourlyRateUsd) but not in Prisma MentorProfile.
+
+Add hourlyRateUsd Int (or Decimal).
+
+Upload requires bookingId, but tutor verification uploads happen before bookings.
+
+Change uploads so they can attach to either:
+
+mentorUserId (verification docs)
+
+bookingId (session docs)
+
+Decide whether sessions are:
+
+fixed packages (15/45/90) OR
+
+hourly rate chosen by tutor
+
+(Right now we have both concepts floating around.)
 
 ## Stack
 
