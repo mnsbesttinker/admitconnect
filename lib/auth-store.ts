@@ -1,10 +1,12 @@
+import { createHash } from "node:crypto";
+
 export type AppRole = "student" | "tutor" | "admin";
 
 export type AuthUser = {
   id: string;
   name: string;
   email: string;
-  password: string;
+  passwordHash: string;
   role: AppRole;
   createdAt: string;
 };
@@ -23,7 +25,7 @@ if (!authGlobal.__admitConnectAuthState) {
         id: "seed-admin-1",
         name: "Platform Admin",
         email: "admin@admitconnect.dev",
-        password: "admin123",
+        passwordHash: hashPassword("admin123"),
         role: "admin",
         createdAt: new Date().toISOString()
       }
@@ -33,6 +35,12 @@ if (!authGlobal.__admitConnectAuthState) {
 }
 
 const state = authGlobal.__admitConnectAuthState;
+
+
+function hashPassword(password: string) {
+  return createHash("sha256").update(password).digest("hex");
+}
+
 
 export function signup(input: { name: string; email: string; password: string; role: AppRole }) {
   const existing = state.users.find((user) => user.email.toLowerCase() === input.email.toLowerCase());
@@ -44,7 +52,7 @@ export function signup(input: { name: string; email: string; password: string; r
     id: crypto.randomUUID(),
     name: input.name,
     email: input.email,
-    password: input.password,
+    passwordHash: hashPassword(input.password),
     role: input.role,
     createdAt: new Date().toISOString()
   };
@@ -54,7 +62,7 @@ export function signup(input: { name: string; email: string; password: string; r
 }
 
 export function login(email: string, password: string) {
-  const user = state.users.find((entry) => entry.email.toLowerCase() === email.toLowerCase() && entry.password === password);
+  const user = state.users.find((entry) => entry.email.toLowerCase() === email.toLowerCase() && entry.passwordHash === hashPassword(password));
   if (!user) {
     return null;
   }

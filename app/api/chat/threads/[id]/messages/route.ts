@@ -6,18 +6,28 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const identity = readIdentityFromHeaders(request.headers);
   const body = (await request.json()) as Partial<{ senderRole: "student" | "tutor"; senderName: string; text: string }>;
 
-  if (!body.senderRole || !body.senderName || !body.text) {
+  if (!body.text) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  if (identity.role !== body.senderRole) {
+  const resolvedSenderRole = body.senderRole || (identity.role === "student" || identity.role === "tutor" ? identity.role : null);
+  if (!resolvedSenderRole) {
+    return NextResponse.json({ error: "Sender role unavailable for authenticated user" }, { status: 400 });
+  }
+
+  if (identity.role !== resolvedSenderRole) {
     return NextResponse.json({ error: "Sender role does not match authenticated role" }, { status: 403 });
+  }
+
+  const senderName = body.senderName?.trim() || identity.name?.trim();
+  if (!senderName) {
+    return NextResponse.json({ error: "Sender name unavailable for authenticated user" }, { status: 400 });
   }
 
   const result = addMessageToThread({
     threadId: params.id,
-    senderRole: body.senderRole,
-    senderName: body.senderName,
+    senderRole: resolvedSenderRole,
+    senderName,
     text: body.text
   });
 

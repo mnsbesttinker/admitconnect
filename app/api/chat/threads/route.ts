@@ -5,15 +5,24 @@ import { readIdentityFromHeaders } from "@/lib/request-auth";
 export async function GET(request: NextRequest) {
   const identity = readIdentityFromHeaders(request.headers);
   const params = new URL(request.url).searchParams;
-  const studentName = params.get("studentName");
-  const tutorId = params.get("tutorId");
+  const studentName = params.get("studentName")?.trim();
+  const tutorId = params.get("tutorId")?.trim();
 
-  if (studentName) {
+  if (studentName || identity.role === "student") {
     if (identity.role !== "student") {
       return NextResponse.json({ error: "Student role required" }, { status: 403 });
     }
 
-    const data = listThreadsForStudent(studentName);
+    const resolvedStudentName = studentName || identity.name?.trim();
+    if (!resolvedStudentName) {
+      return NextResponse.json({ error: "Student name unavailable for authenticated user" }, { status: 400 });
+    }
+
+    if (studentName && identity.name?.trim() && studentName !== identity.name.trim()) {
+      return NextResponse.json({ error: "Cannot access threads for another student" }, { status: 403 });
+    }
+
+    const data = listThreadsForStudent(resolvedStudentName);
     return NextResponse.json({ data, count: data.length });
   }
 
@@ -37,12 +46,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Only students can initiate new threads" }, { status: 403 });
   }
 
-  if (!body.studentName || !body.tutorId || !body.text) {
+  if (!body.tutorId || !body.text) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
+  const studentName = body.studentName?.trim() || identity.name?.trim();
+  if (!studentName) {
+    return NextResponse.json({ error: "Student name unavailable for authenticated user" }, { status: 400 });
+  }
+
   const thread = createStudentInitiatedThread({
-    studentName: body.studentName,
+    studentName,
     tutorId: body.tutorId,
     text: body.text
   });

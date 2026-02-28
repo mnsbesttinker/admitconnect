@@ -12,14 +12,29 @@ type Submission = {
   credentialDocuments: string[];
 };
 
-const adminHeaders = { "x-user-role": "admin", "x-user-name": "Platform Admin" };
-
 export default function AdminVerificationPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [status, setStatus] = useState("Loading...");
+  const [canManage, setCanManage] = useState(false);
 
   const loadPending = useCallback(async function loadPending() {
-    const response = await fetch("/api/admin/mentors/pending", { headers: adminHeaders });
+    const authResponse = await fetch("/api/auth/me", { cache: "no-store" });
+    if (!authResponse.ok) {
+      setSubmissions([]);
+      setCanManage(false);
+      setStatus("Please login as an admin to review submissions.");
+      return;
+    }
+
+    const authPayload = (await authResponse.json()) as { data: { role: string | null } };
+    if (authPayload.data.role !== "admin") {
+      setSubmissions([]);
+      setCanManage(false);
+      setStatus("Admin role required to review submissions.");
+      return;
+    }
+
+    const response = await fetch("/api/admin/mentors/pending");
     const data = await response.json();
 
     if (!response.ok) {
@@ -27,6 +42,7 @@ export default function AdminVerificationPage() {
       return;
     }
 
+    setCanManage(true);
     setSubmissions(data.data);
     setStatus(`Loaded ${data.count} pending submissions`);
   }, []);
@@ -36,8 +52,12 @@ export default function AdminVerificationPage() {
   }, [loadPending]);
 
   async function decide(id: string, action: "approve" | "reject") {
+    if (!canManage) {
+      setStatus("Admin role required to review submissions.");
+      return;
+    }
     const response = await fetch(`/api/admin/mentors/${id}/${action}`, {
-      headers: { ...adminHeaders, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
       method: "POST",
       body: JSON.stringify({ adminNotes: action === "approve" ? "Approved" : "Rejected" })
     });
