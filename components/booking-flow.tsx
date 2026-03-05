@@ -5,8 +5,12 @@ import { mentors, sessionTypes } from "@/lib/mentors";
 
 type BookingResponse = {
   id: string;
+  applicantName: string;
+  applicantEmail: string;
   mentorId: string;
   sessionTypeId: string;
+  startTimeUtc: string;
+  endTimeUtc: string;
   status: string;
   meetingLink: string | null;
 };
@@ -24,21 +28,45 @@ type AvailabilitySlot = {
   isBooked: boolean;
 };
 
+type Viewer = { name: string | null; email?: string | null; role: "student" | "tutor" | "admin" | null } | null;
+
 function formatSlot(start: string, end: string) {
   return `${new Date(start).toLocaleString()} → ${new Date(end).toLocaleTimeString()}`;
 }
 
 export default function BookingFlow() {
-  const [applicantName, setApplicantName] = useState("Tymur");
+  const [viewer, setViewer] = useState<Viewer>(null);
   const [mentorId, setMentorId] = useState(mentors[0]?.id ?? "");
   const [sessionTypeId, setSessionTypeId] = useState<string>(sessionTypes[1]?.id ?? "deep-dive");
   const [slot, setSlot] = useState("");
   const [availableSlots, setAvailableSlots] = useState<AvailabilitySlot[]>([]);
   const [booking, setBooking] = useState<BookingResponse | null>(null);
+  const [myBookings, setMyBookings] = useState<BookingResponse[]>([]);
   const [paymentIntent, setPaymentIntent] = useState<PaymentResponse | null>(null);
   const [message, setMessage] = useState<string>("");
 
   const selectedMentor = useMemo(() => mentors.find((mentor) => mentor.id === mentorId), [mentorId]);
+  const canBook = viewer?.role === "student";
+
+  useEffect(() => {
+    async function loadViewer() {
+      const response = await fetch("/api/auth/me", { cache: "no-store" });
+      if (!response.ok) {
+        setViewer(null);
+        setMessage("Login as a student before booking a session.");
+        return;
+      }
+
+      const payload = (await response.json()) as { data: Viewer };
+      setViewer(payload.data);
+
+      if (payload.data?.role !== "student") {
+        setMessage("Only student accounts can create bookings.");
+      }
+    }
+
+    void loadViewer();
+  }, []);
 
   useEffect(() => {
     async function loadAvailability() {
@@ -67,7 +95,31 @@ export default function BookingFlow() {
     }
   }, [mentorId]);
 
+  async function loadMyBookings() {
+    const response = await fetch("/api/bookings/my", { cache: "no-store" });
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMyBookings([]);
+      setMessage(data.error ?? "Unable to load your bookings");
+      return;
+    }
+
+    setMyBookings(data.data as BookingResponse[]);
+  }
+
+  useEffect(() => {
+    if (canBook) {
+      void loadMyBookings();
+    }
+  }, [canBook]);
+
   async function createBooking() {
+    if (!canBook) {
+      setMessage("Only student accounts can create bookings.");
+      return;
+    }
+
     if (!slot) {
       setMessage("Please select an available slot first.");
       return;
@@ -80,7 +132,7 @@ export default function BookingFlow() {
     const response = await fetch("/api/bookings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ applicantName, mentorId, sessionTypeId, startTimeUtc: slot })
+      body: JSON.stringify({ mentorId, sessionTypeId, startTimeUtc: slot })
     });
 
     const data = await response.json();
@@ -91,6 +143,7 @@ export default function BookingFlow() {
 
     setBooking(data.data);
     setMessage(`Booking created: ${data.data.id}`);
+    await loadMyBookings();
   }
 
   async function createPaymentIntent() {
@@ -140,17 +193,18 @@ export default function BookingFlow() {
 
     setBooking(data.data.booking);
     setMessage("Payment confirmed and booking marked confirmed.");
+    await loadMyBookings();
   }
 
   return (
     <section className="card" style={{ padding: "1.25rem" }}>
       <h2 style={{ marginTop: 0 }}>MVP Booking + Payment Flow Tester</h2>
-      <p className="muted">Create booking, create mock payment intent, then simulate webhook confirmation.</p>
+      <p className="muted">A signed-in student can book a mentor slot. Payments remain mocked for now.</p>
 
       <div style={{ display: "grid", gap: "0.75rem" }}>
         <label>
-          Applicant name
-          <input value={applicantName} onChange={(event) => setApplicantName(event.target.value)} style={{ width: "100%" }} />
+          Signed in as
+          <input value={viewer ? `${viewer.name || "Unknown"} (${viewer.email || "no-email"})` : "Guest"} style={{ width: "100%" }} disabled readOnly />
         </label>
 
         <label>
@@ -205,7 +259,7 @@ export default function BookingFlow() {
       </div>
 
       <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem", flexWrap: "wrap" }}>
-        <button type="button" className="btn" onClick={createBooking} disabled={!slot}>1) Create booking</button>
+        <button type="button" className="btn" onClick={createBooking} disabled={!slot || !canBook}>1) Create booking</button>
         <button type="button" className="btn" onClick={createPaymentIntent} disabled={!booking}>2) Create payment intent</button>
         <button type="button" className="btn" onClick={confirmPaymentWebhook} disabled={!paymentIntent}>3) Confirm payment webhook</button>
       </div>
@@ -217,6 +271,18 @@ export default function BookingFlow() {
         <p style={{ marginBottom: "0.3rem" }}><strong>Booking:</strong> {booking ? `${booking.id} (${booking.status})` : "none"}</p>
         <p style={{ margin: 0 }}><strong>Payment intent:</strong> {paymentIntent ? paymentIntent.providerPaymentIntentId : "none"}</p>
       </div>
+
+      <section style={{ marginTop: "1rem" }}>
+        <h3 style={{ marginBottom: "0.5rem" }}>My bookings</h3>
+        {myBookings.length === 0 && <p className="muted">No bookings yet.</p>}
+        {myBookings.map((entry) => (
+          <div key={entry.id} className="card" style={{ marginBottom: "0.5rem" }}>
+            <p style={{ margin: 0 }}>
+              <strong>{entry.applicantName}</strong> booked <strong>{entry.mentorId}</strong> at {new Date(entry.startTimeUtc).toLocaleString()} ({entry.status})
+            </p>
+          </div>
+        ))}
+      </section>
     </section>
   );
 }

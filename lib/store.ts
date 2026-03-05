@@ -43,6 +43,7 @@ export type BookingStatus = "pending" | "paid" | "confirmed" | "completed" | "ca
 export type Booking = {
   id: string;
   applicantName: string;
+  applicantEmail: string;
   mentorId: string;
   sessionTypeId: string;
   startTimeUtc: string;
@@ -225,6 +226,7 @@ export function decideOnboarding(id: string, decision: "approved" | "rejected", 
 
 export function createBooking(input: {
   applicantName: string;
+  applicantEmail: string;
   mentorId: string;
   sessionTypeId: string;
   startTimeUtc: string;
@@ -249,6 +251,7 @@ export function createBooking(input: {
   const booking: Booking = {
     id: crypto.randomUUID(),
     applicantName: input.applicantName,
+    applicantEmail: input.applicantEmail,
     mentorId: input.mentorId,
     sessionTypeId: input.sessionTypeId,
     startTimeUtc: slot.startTimeUtc,
@@ -264,6 +267,11 @@ export function createBooking(input: {
 
 export function listBookingsByApplicant(applicantName: string) {
   return bookings.filter((booking) => booking.applicantName.toLowerCase() === applicantName.toLowerCase());
+}
+
+
+export function listBookingsByApplicantEmail(applicantEmail: string) {
+  return bookings.filter((booking) => booking.applicantEmail.toLowerCase() === applicantEmail.toLowerCase());
 }
 
 export function listBookingsByMentor(mentorId: string) {

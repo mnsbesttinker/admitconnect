@@ -1,22 +1,32 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createBooking } from "@/lib/store";
+import { readIdentityFromHeaders } from "@/lib/request-auth";
 
 type CreateBookingPayload = {
-  applicantName: string;
   mentorId: string;
   sessionTypeId: string;
   startTimeUtc: string;
 };
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const identity = readIdentityFromHeaders(request.headers);
   const body = (await request.json()) as Partial<CreateBookingPayload>;
 
-  if (!body.applicantName || !body.mentorId || !body.sessionTypeId || !body.startTimeUtc) {
+  if (identity.role !== "student") {
+    return NextResponse.json({ error: "Only authenticated students can create bookings" }, { status: 403 });
+  }
+
+  if (!identity.name || !identity.email) {
+    return NextResponse.json({ error: "Authenticated student profile is incomplete" }, { status: 400 });
+  }
+
+  if (!body.mentorId || !body.sessionTypeId || !body.startTimeUtc) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
   const booking = createBooking({
-    applicantName: body.applicantName,
+    applicantName: identity.name,
+    applicantEmail: identity.email,
     mentorId: body.mentorId,
     sessionTypeId: body.sessionTypeId,
     startTimeUtc: body.startTimeUtc
