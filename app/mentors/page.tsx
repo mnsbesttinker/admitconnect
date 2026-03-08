@@ -1,30 +1,46 @@
-import Link from "next/link";
-import { mentors } from "@/lib/mentors";
+"use client";
 
-export const metadata = {
-  title: "Mentor Directory | AdmitConnect"
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
+type Tutor = {
+  id: string;
+  fullName: string;
+  timezone: string;
+  school: string;
+  major: string;
+  bio: string;
+  specialties: string;
+  hourlyRate: number;
 };
 
 export default function MentorDirectoryPage() {
+  const [tutors, setTutors] = useState<Tutor[]>([]);
+
+  useEffect(() => {
+    async function load() {
+      const response = await fetch("/api/tutors", { cache: "no-store" });
+      const payload = await response.json();
+      if (response.ok) {
+        setTutors(payload.data as Tutor[]);
+      }
+    }
+
+    void load();
+  }, []);
+
   return (
     <div className="container">
-      <h1>Mentor Directory</h1>
-      <p className="muted">MVP static data with core filters to be wired in next iterations.</p>
+      <h1>Tutor Directory</h1>
       <div className="grid">
-        {mentors.map((mentor) => (
-          <article key={mentor.id} className="card">
-            <h3 style={{ marginTop: 0 }}>{mentor.name}</h3>
-            <p className="muted" style={{ marginTop: 0 }}>
-              {mentor.university} · {mentor.major}
-            </p>
-            <p style={{ marginBottom: "0.5rem" }}>⭐ {mentor.rating} ({mentor.reviewCount} reviews)</p>
-            <div style={{ marginBottom: "0.5rem" }}>
-              {mentor.credibilityTags.map((tag) => (
-                <span className="badge" key={tag}>{tag}</span>
-              ))}
-            </div>
-            <p className="muted">{mentor.languages.join(" · ")}</p>
-            <Link href={`/mentors/${mentor.id}`} className="btn">View profile</Link>
+        {tutors.map((tutor) => (
+          <article key={tutor.id} className="card">
+            <h3 style={{ marginTop: 0 }}>{tutor.fullName}</h3>
+            <p className="muted">{tutor.school} · {tutor.major}</p>
+            <p>{tutor.bio}</p>
+            <p className="muted">Specialties: {tutor.specialties}</p>
+            <p><strong>${tutor.hourlyRate}/hr</strong></p>
+            <Link href={`/mentors/${tutor.id}`} className="btn">View profile</Link>
           </article>
         ))}
       </div>

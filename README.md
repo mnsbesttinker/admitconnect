@@ -114,3 +114,25 @@ Open `http://localhost:3000`.
 - The current booking/availability behavior is still seed-data based in memory and resets on dev-server restart.
 - Replacing in-memory stores with database-backed persistence is a top next step.
 - Chat/admin API routes currently use mock header-based role checks (`x-user-role`, `x-user-name`) until full auth is integrated.
+
+## MVP Booking v1 environment variables
+
+Create `.env.local` with:
+
+```bash
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/admitconnect?schema=public"
+ADMITCONNECT_SESSION_SECRET="replace-with-a-long-random-secret"
+RESEND_API_KEY="re_xxx" # optional in local dev
+RESEND_FROM_EMAIL="bookings@yourdomain.com" # optional in local dev
+```
+
+If `RESEND_*` vars are omitted, booking confirmation emails are logged to server console as a stub.
+
+### Run DB + app
+
+```bash
+npm install
+npm run prisma:generate
+npm run prisma:migrate
+npm run dev
+```

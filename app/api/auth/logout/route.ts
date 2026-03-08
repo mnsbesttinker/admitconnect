@@ -1,14 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { logout } from "@/lib/auth-store";
+import { NextResponse } from "next/server";
 
-function getSessionToken(request: NextRequest) {
-  return request.cookies.get("admitconnect_session")?.value;
-}
-
-export async function POST(request: NextRequest) {
-  const token = getSessionToken(request);
-  logout(token);
-
+export async function POST() {
   const response = NextResponse.json({ data: { ok: true } });
   response.cookies.set("admitconnect_session", "", {
     path: "/",
