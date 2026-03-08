@@ -1,18 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listBookingsByApplicantEmail } from "@/lib/store";
+import { prisma } from "@/lib/prisma";
 import { readIdentityFromHeaders } from "@/lib/request-auth";
 
 export async function GET(request: NextRequest) {
   const identity = readIdentityFromHeaders(request.headers);
-
-  if (identity.role !== "student") {
-    return NextResponse.json({ error: "Only authenticated students can view their bookings" }, { status: 403 });
+  if (!identity.id || !identity.role) {
+    return NextResponse.json({ error: "Auth required" }, { status: 401 });
   }
 
-  if (!identity.email) {
-    return NextResponse.json({ error: "Authenticated student email unavailable" }, { status: 400 });
+  if (identity.role === "student") {
+    const data = await prisma.booking.findMany({
+      where: { studentUserId: identity.id },
+      include: { tutor: true, slot: true },
+      orderBy: { createdAt: "desc" }
+    });
+    return NextResponse.json({ data });
   }
 
-  const data = listBookingsByApplicantEmail(identity.email);
-  return NextResponse.json({ data, count: data.length });
+  const data = await prisma.booking.findMany({
+    where: { tutorUserId: identity.id },
+    include: { student: true, slot: true },
+    orderBy: { createdAt: "desc" }
+  });
+  return NextResponse.json({ data });
 }

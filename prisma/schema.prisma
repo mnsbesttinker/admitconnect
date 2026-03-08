@@ -8,154 +8,85 @@ datasource db {
 }
 
 enum UserRole {
-  applicant
-  mentor
-  admin
-}
-
-enum VerificationStatus {
-  pending
-  approved
-  rejected
+  student
+  tutor
 }
 
 enum BookingStatus {
   pending
-  paid
   confirmed
   completed
   cancelled
-  refunded
-  no_show
-}
-
-enum PaymentStatus {
-  requires_payment
-  paid
-  refunded
-  failed
 }
 
 model User {
-  id           String          @id @default(uuid())
-  email        String          @unique
-  passwordHash String?
+  id           String   @id @default(uuid())
+  fullName     String
+  email        String   @unique
+  passwordHash String
   role         UserRole
-  createdAt    DateTime        @default(now())
+  timezone     String
+  createdAt    DateTime @default(now())
 
-  mentorProfile     MentorProfile?
-  applicantBookings Booking[]        @relation("ApplicantBookings")
-  mentorBookings    Booking[]        @relation("MentorBookings")
-  mentorSlots       AvailabilitySlot[]
-  applicantReviews  Review[]         @relation("ApplicantReviews")
-  mentorReviews     Review[]         @relation("MentorReviews")
-  uploads           Upload[]
+  tutorProfile   TutorProfile?
+  studentProfile StudentProfile?
+
+  tutorAvailability AvailabilitySlot[] @relation("TutorAvailability")
+  tutorBookings     Booking[]          @relation("TutorBookings")
+  studentBookings   Booking[]          @relation("StudentBookings")
 }
 
-model MentorProfile {
-  userId              String             @id
-  name                String
-  university          String
-  graduationYear      Int
-  major               String
-  countryOrigin       String?
-  languages           String[]
-  bio                 String
-  credibilityTags     String[]
-  verificationStatus  VerificationStatus @default(pending)
-  verificationNotes   String?
-  profilePhotoUrl     String?
-  avgRating           Float              @default(0)
-  reviewCount         Int                @default(0)
+model TutorProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  school      String
+  major       String
+  bio         String
+  specialties String
+  hourlyRate  Int
+  isVerified  Boolean  @default(false)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model SessionType {
-  id               String    @id @default(uuid())
-  name             String
-  minutes          Int
-  priceUsd         Int
-  platformFeePct   Float     @default(0.2)
-  bookings         Booking[]
+model StudentProfile {
+  id            String  @id @default(uuid())
+  userId        String  @unique
+  country       String?
+  intendedMajor String?
+  curriculum    String?
+  satScore      Int?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model AvailabilitySlot {
   id           String   @id @default(uuid())
-  mentorUserId String
+  tutorUserId  String
   startTimeUtc DateTime
   endTimeUtc   DateTime
   isBooked     Boolean  @default(false)
+  createdAt    DateTime @default(now())
 
-  mentor User @relation(fields: [mentorUserId], references: [id], onDelete: Cascade)
+  tutor    User      @relation("TutorAvailability", fields: [tutorUserId], references: [id], onDelete: Cascade)
+  booking  Booking?
 
-  @@index([mentorUserId, startTimeUtc])
+  @@index([tutorUserId, startTimeUtc])
 }
 
 model Booking {
-  id              String       @id @default(uuid())
-  applicantUserId String
-  mentorUserId    String
-  sessionTypeId   String
-  startTimeUtc    DateTime
-  endTimeUtc      DateTime
-  status          BookingStatus @default(pending)
-  meetingLink     String?
-  notesPrivate    String?
-  createdAt       DateTime      @default(now())
+  id            String        @id @default(uuid())
+  studentUserId String
+  tutorUserId   String
+  slotId        String        @unique
+  status        BookingStatus @default(confirmed)
+  googleMeetLink String?
+  createdAt     DateTime      @default(now())
 
-  applicant   User        @relation("ApplicantBookings", fields: [applicantUserId], references: [id], onDelete: Cascade)
-  mentor      User        @relation("MentorBookings", fields: [mentorUserId], references: [id], onDelete: Cascade)
-  sessionType SessionType @relation(fields: [sessionTypeId], references: [id])
-  payment     Payment?
-  review      Review?
-  uploads     Upload[]
+  student User             @relation("StudentBookings", fields: [studentUserId], references: [id], onDelete: Cascade)
+  tutor   User             @relation("TutorBookings", fields: [tutorUserId], references: [id], onDelete: Cascade)
+  slot    AvailabilitySlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
 
-  @@index([applicantUserId, createdAt])
-  @@index([mentorUserId, startTimeUtc])
-}
-
-model Payment {
-  id                      String       @id @default(uuid())
-  bookingId               String       @unique
-  provider                String
-  providerPaymentIntentId String       @unique
-  amountTotal             Int
-  platformFeeAmount       Int
-  mentorPayoutAmount      Int
-  currency                String       @default("USD")
-  status                  PaymentStatus @default(requires_payment)
-  createdAt               DateTime      @default(now())
-
-  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-}
-
-model Review {
-  id              String   @id @default(uuid())
-  bookingId        String   @unique
-  applicantUserId  String
-  mentorUserId     String
-  rating           Int
-  text             String
-  createdAt        DateTime @default(now())
-
-  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  applicant User    @relation("ApplicantReviews", fields: [applicantUserId], references: [id], onDelete: Cascade)
-  mentor    User    @relation("MentorReviews", fields: [mentorUserId], references: [id], onDelete: Cascade)
-
-  @@index([mentorUserId, createdAt])
-}
-
-model Upload {
-  id             String   @id @default(uuid())
-  bookingId      String
-  uploaderUserId String
-  fileUrl        String
-  fileType       String
-  createdAt      DateTime @default(now())
-
-  booking  Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  uploader User    @relation(fields: [uploaderUserId], references: [id], onDelete: Cascade)
-
-  @@index([bookingId, createdAt])
+  @@index([studentUserId, createdAt])
+  @@index([tutorUserId, createdAt])
 }
