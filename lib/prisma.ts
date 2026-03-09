@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 
 type AnyRecord = Record<string, any>;
 
@@ -93,21 +93,29 @@ function loadDb(): MockDb {
     return empty;
   }
 
-  try {
-    const raw = JSON.parse(readFileSync(MOCK_DB_PATH, "utf8")) as MockDb;
-    const normalized = normalizeDbDates(raw);
-    globalForPrisma.__mockDb = normalized;
-    return normalized;
-  } catch {
-    const fallback = globalForPrisma.__mockDb || createEmptyDb();
-    globalForPrisma.__mockDb = fallback;
-    return fallback;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const raw = JSON.parse(readFileSync(MOCK_DB_PATH, "utf8")) as MockDb;
+      const normalized = normalizeDbDates(raw);
+      globalForPrisma.__mockDb = normalized;
+      return normalized;
+    } catch {
+      if (!existsSync(MOCK_DB_PATH)) {
+        break;
+      }
+    }
   }
+
+  const fallback = globalForPrisma.__mockDb || createEmptyDb();
+  globalForPrisma.__mockDb = fallback;
+  return fallback;
 }
 
 function saveDb(db: MockDb) {
   globalForPrisma.__mockDb = db;
-  writeFileSync(MOCK_DB_PATH, JSON.stringify(db, null, 2));
+  const tempPath = `${MOCK_DB_PATH}.${process.pid}.${Date.now()}.tmp`;
+  writeFileSync(tempPath, JSON.stringify(db, null, 2));
+  renameSync(tempPath, MOCK_DB_PATH);
 }
 
 function createMockPrisma(): AnyRecord {

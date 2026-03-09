@@ -28,7 +28,10 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const tutorUserId = new URL(request.url).searchParams.get("tutorUserId");
+  const queryTutorUserId = new URL(request.url).searchParams.get("tutorUserId");
+  const identity = readIdentityFromHeaders(request.headers);
+  const tutorUserId = queryTutorUserId || (identity.role === "tutor" ? identity.id : null);
+
   if (!tutorUserId) {
     return NextResponse.json({ error: "Missing tutorUserId" }, { status: 400 });
   }
