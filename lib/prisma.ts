@@ -1,3 +1,5 @@
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+
 type AnyRecord = Record<string, any>;
 
 type MockUser = {
@@ -49,28 +51,71 @@ type MockBooking = {
   createdAt: Date;
 };
 
-const globalForPrisma = globalThis as unknown as { prisma?: AnyRecord; __mockDb?: AnyRecord };
+type MockDb = {
+  users: MockUser[];
+  tutorProfiles: MockTutorProfile[];
+  studentProfiles: MockStudentProfile[];
+  availabilitySlots: MockAvailabilitySlot[];
+  bookings: MockBooking[];
+};
 
-function createMockPrisma(): AnyRecord {
-  if (!globalForPrisma.__mockDb) {
-    globalForPrisma.__mockDb = {
-      users: [] as MockUser[],
-      tutorProfiles: [] as MockTutorProfile[],
-      studentProfiles: [] as MockStudentProfile[],
-      availabilitySlots: [] as MockAvailabilitySlot[],
-      bookings: [] as MockBooking[]
-    };
+const globalForPrisma = globalThis as unknown as { prisma?: AnyRecord; __mockDb?: MockDb };
+const MOCK_DB_PATH = process.env.ADMITCONNECT_MOCK_DB_PATH || "/tmp/admitconnect-mock-db.json";
+
+function createEmptyDb(): MockDb {
+  return {
+    users: [],
+    tutorProfiles: [],
+    studentProfiles: [],
+    availabilitySlots: [],
+    bookings: []
+  };
+}
+
+function normalizeDbDates(db: MockDb): MockDb {
+  return {
+    ...db,
+    users: db.users.map((u) => ({ ...u, createdAt: new Date(u.createdAt) })),
+    availabilitySlots: db.availabilitySlots.map((s) => ({
+      ...s,
+      startTimeUtc: new Date(s.startTimeUtc),
+      endTimeUtc: new Date(s.endTimeUtc),
+      createdAt: new Date(s.createdAt)
+    })),
+    bookings: db.bookings.map((b) => ({ ...b, createdAt: new Date(b.createdAt) }))
+  };
+}
+
+function loadDb(): MockDb {
+  if (globalForPrisma.__mockDb) {
+    return globalForPrisma.__mockDb;
   }
 
-  const db = globalForPrisma.__mockDb as {
-    users: MockUser[];
-    tutorProfiles: MockTutorProfile[];
-    studentProfiles: MockStudentProfile[];
-    availabilitySlots: MockAvailabilitySlot[];
-    bookings: MockBooking[];
-  };
+  if (!existsSync(MOCK_DB_PATH)) {
+    const empty = createEmptyDb();
+    globalForPrisma.__mockDb = empty;
+    return empty;
+  }
 
-  const withTutorInclude = (booking: MockBooking) => {
+  try {
+    const raw = JSON.parse(readFileSync(MOCK_DB_PATH, "utf8")) as MockDb;
+    const normalized = normalizeDbDates(raw);
+    globalForPrisma.__mockDb = normalized;
+    return normalized;
+  } catch {
+    const empty = createEmptyDb();
+    globalForPrisma.__mockDb = empty;
+    return empty;
+  }
+}
+
+function saveDb(db: MockDb) {
+  globalForPrisma.__mockDb = db;
+  writeFileSync(MOCK_DB_PATH, JSON.stringify(db, null, 2));
+}
+
+function createMockPrisma(): AnyRecord {
+  const withTutorInclude = (db: MockDb, booking: MockBooking) => {
     const tutor = db.users.find((u) => u.id === booking.tutorUserId) || null;
     const student = db.users.find((u) => u.id === booking.studentUserId) || null;
     const slot = db.availabilitySlots.find((s) => s.id === booking.slotId) || null;
@@ -80,6 +125,7 @@ function createMockPrisma(): AnyRecord {
   const mock: AnyRecord = {
     user: {
       findUnique: async ({ where }: AnyRecord) => {
+        const db = loadDb();
         if (where?.email) {
           return db.users.find((u) => u.email === String(where.email).toLowerCase()) || null;
         }
@@ -89,6 +135,7 @@ function createMockPrisma(): AnyRecord {
         return null;
       },
       create: async ({ data }: AnyRecord) => {
+        const db = loadDb();
         const user: MockUser = {
           id: data.id || crypto.randomUUID(),
           fullName: data.fullName,
@@ -99,30 +146,32 @@ function createMockPrisma(): AnyRecord {
           createdAt: new Date()
         };
         db.users.push(user);
+        saveDb(db);
         return user;
       }
     },
 
     tutorProfile: {
-      findMany: async () =>
-        db.tutorProfiles
+      findMany: async () => {
+        const db = loadDb();
+        return db.tutorProfiles
           .map((profile) => ({ ...profile, user: db.users.find((u) => u.id === profile.userId) }))
-          .filter((entry) => entry.user),
+          .filter((entry) => entry.user);
+      },
       findUnique: async ({ where }: AnyRecord) => {
+        const db = loadDb();
         const profile = db.tutorProfiles.find((p) => p.userId === where?.userId);
-        if (!profile) {
-          return null;
-        }
+        if (!profile) return null;
         const user = db.users.find((u) => u.id === profile.userId);
-        if (!user) {
-          return null;
-        }
+        if (!user) return null;
         return { ...profile, user };
       },
       upsert: async ({ where, create, update }: AnyRecord) => {
+        const db = loadDb();
         const existing = db.tutorProfiles.find((p) => p.userId === where?.userId);
         if (existing) {
           Object.assign(existing, update);
+          saveDb(db);
           return existing;
         }
 
@@ -137,15 +186,18 @@ function createMockPrisma(): AnyRecord {
           isVerified: Boolean(create.isVerified)
         };
         db.tutorProfiles.push(record);
+        saveDb(db);
         return record;
       }
     },
 
     studentProfile: {
       upsert: async ({ where, create, update }: AnyRecord) => {
+        const db = loadDb();
         const existing = db.studentProfiles.find((p) => p.userId === where?.userId);
         if (existing) {
           Object.assign(existing, update);
+          saveDb(db);
           return existing;
         }
 
@@ -158,12 +210,14 @@ function createMockPrisma(): AnyRecord {
           satScore: create.satScore ?? null
         };
         db.studentProfiles.push(record);
+        saveDb(db);
         return record;
       }
     },
 
     availabilitySlot: {
       create: async ({ data }: AnyRecord) => {
+        const db = loadDb();
         const slot: MockAvailabilitySlot = {
           id: data.id || crypto.randomUUID(),
           tutorUserId: data.tutorUserId,
@@ -173,9 +227,11 @@ function createMockPrisma(): AnyRecord {
           createdAt: new Date()
         };
         db.availabilitySlots.push(slot);
+        saveDb(db);
         return slot;
       },
       findMany: async ({ where }: AnyRecord = {}) => {
+        const db = loadDb();
         return db.availabilitySlots.filter((slot) => {
           if (where?.tutorUserId && slot.tutorUserId !== where.tutorUserId) return false;
           if (typeof where?.isBooked === "boolean" && slot.isBooked !== where.isBooked) return false;
@@ -183,8 +239,12 @@ function createMockPrisma(): AnyRecord {
           return true;
         });
       },
-      findUnique: async ({ where }: AnyRecord) => db.availabilitySlots.find((s) => s.id === where?.id) || null,
+      findUnique: async ({ where }: AnyRecord) => {
+        const db = loadDb();
+        return db.availabilitySlots.find((s) => s.id === where?.id) || null;
+      },
       updateMany: async ({ where, data }: AnyRecord) => {
+        const db = loadDb();
         const matches = db.availabilitySlots.filter((s) => {
           if (where?.id && s.id !== where.id) return false;
           if (typeof where?.isBooked === "boolean" && s.isBooked !== where.isBooked) return false;
@@ -193,12 +253,14 @@ function createMockPrisma(): AnyRecord {
         matches.forEach((entry) => {
           if (typeof data?.isBooked === "boolean") entry.isBooked = data.isBooked;
         });
+        saveDb(db);
         return { count: matches.length };
       }
     },
 
     booking: {
       create: async ({ data }: AnyRecord) => {
+        const db = loadDb();
         const booking: MockBooking = {
           id: data.id || crypto.randomUUID(),
           studentUserId: data.studentUserId,
@@ -209,9 +271,11 @@ function createMockPrisma(): AnyRecord {
           createdAt: new Date()
         };
         db.bookings.push(booking);
-        return withTutorInclude(booking);
+        saveDb(db);
+        return withTutorInclude(db, booking);
       },
       findMany: async ({ where }: AnyRecord = {}) => {
+        const db = loadDb();
         return db.bookings
           .filter((b) => {
             if (where?.studentUserId && b.studentUserId !== where.studentUserId) return false;
@@ -219,18 +283,16 @@ function createMockPrisma(): AnyRecord {
             return true;
           })
           .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-          .map(withTutorInclude);
+          .map((booking) => withTutorInclude(db, booking));
       },
       update: async ({ where, data }: AnyRecord) => {
+        const db = loadDb();
         const booking = db.bookings.find((b) => b.id === where?.id);
         if (!booking) return null;
-        if (typeof data?.googleMeetLink !== "undefined") {
-          booking.googleMeetLink = data.googleMeetLink;
-        }
-        if (data?.status) {
-          booking.status = data.status;
-        }
-        return withTutorInclude(booking);
+        if (typeof data?.googleMeetLink !== "undefined") booking.googleMeetLink = data.googleMeetLink;
+        if (data?.status) booking.status = data.status;
+        saveDb(db);
+        return withTutorInclude(db, booking);
       }
     },
 

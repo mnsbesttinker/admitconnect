@@ -23,21 +23,39 @@ export default function MentorProfilePage({ params }: { params: { id: string } }
   const [tutor, setTutor] = useState<Tutor | null>(null);
   const [viewer, setViewer] = useState<Viewer>(null);
   const [status, setStatus] = useState("Ready");
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
-      const [tutorRes, meRes] = await Promise.all([
-        fetch(`/api/tutors/${params.id}`, { cache: "no-store" }),
-        fetch("/api/auth/me", { cache: "no-store" })
-      ]);
-      const tutorPayload = await tutorRes.json();
-      if (tutorRes.ok) {
-        setTutor(tutorPayload.data as Tutor);
-      }
+      setIsLoading(true);
+      setLoadError(null);
 
-      if (meRes.ok) {
-        const me = (await meRes.json()) as { data: Viewer };
-        setViewer(me.data);
+      try {
+        const tutorRes = await fetch(`/api/tutors/${params.id}`, { cache: "no-store" });
+        const tutorPayload = await tutorRes.json();
+
+        if (!tutorRes.ok) {
+          setTutor(null);
+          setLoadError(tutorPayload.error || "Failed to load tutor profile.");
+          setIsLoading(false);
+          return;
+        }
+
+        setTutor(tutorPayload.data as Tutor);
+
+        const meRes = await fetch("/api/auth/me", { cache: "no-store" });
+        if (meRes.ok) {
+          const me = (await meRes.json()) as { data: Viewer };
+          setViewer(me.data);
+        } else {
+          setViewer(null);
+        }
+      } catch {
+        setTutor(null);
+        setLoadError("Failed to load tutor profile.");
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -63,8 +81,20 @@ export default function MentorProfilePage({ params }: { params: { id: string } }
 
   const zone = viewer?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 
-  if (!tutor) {
+  if (isLoading) {
     return <div className="container"><p>Loading tutor...</p></div>;
+  }
+
+  if (loadError || !tutor) {
+    return (
+      <div className="container">
+        <Link href="/mentors" className="muted">← Back to tutors</Link>
+        <section className="card" style={{ marginTop: "1rem" }}>
+          <h1 style={{ marginTop: 0 }}>Tutor unavailable</h1>
+          <p className="muted">{loadError || "Tutor not found."}</p>
+        </section>
+      </div>
+    );
   }
 
   return (
@@ -86,6 +116,7 @@ export default function MentorProfilePage({ params }: { params: { id: string } }
                 {new Date(slot.startTimeUtc).toLocaleString([], { timeZone: zone })} → {new Date(slot.endTimeUtc).toLocaleTimeString([], { timeZone: zone })}
               </p>
               <button className="btn" disabled={viewer?.role !== "student"} onClick={() => bookSlot(slot.id)}>Book this slot</button>
+              {viewer?.role !== "student" && <p className="muted" style={{ marginBottom: 0 }}>Only logged-in students can book.</p>}
             </div>
           ))}
         </div>
