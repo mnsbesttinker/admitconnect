@@ -127,3 +127,21 @@ This drops and recreates the schema from migrations (destructive).
 - Chat/admin verification/review flows still include MVP placeholders and some in-memory logic.
 - Core tutor profile + slot + booking flow is now persisted to PostgreSQL.
 - Signup confirmations and booking confirmations are delivered through Resend when `RESEND_API_KEY` and `RESEND_FROM_EMAIL` are configured; otherwise they are logged as stubs.
+
+
+## Troubleshooting
+
+- **`npm error Missing script: "prisma:studio"`**
+  - Your local checkout is likely behind the latest `package.json`.
+  - Run:
+
+```bash
+git pull
+npm install
+npm run
+```
+
+  - Then use either `npm run prisma:studio` or alias `npm run db:studio`.
+
+- **Prisma commands fail with `prisma: command not found`**
+  - Run `npm install` first so local binaries are available in `node_modules/.bin`.

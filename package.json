@@ -14,7 +14,9 @@
     "db:down": "docker compose down",
     "prisma:studio": "prisma studio",
     "db:shell": "docker exec -it admitconnect-postgres psql -U admitconnect -d admitconnect",
-    "db:reset": "prisma migrate reset --force"
+    "db:reset": "prisma migrate reset --force",
+    "studio": "npm run prisma:studio",
+    "db:studio": "npm run prisma:studio"
   },
   "dependencies": {
     "next": "14.2.5",
