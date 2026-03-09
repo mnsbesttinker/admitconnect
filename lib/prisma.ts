@@ -87,12 +87,8 @@ function normalizeDbDates(db: MockDb): MockDb {
 }
 
 function loadDb(): MockDb {
-  if (globalForPrisma.__mockDb) {
-    return globalForPrisma.__mockDb;
-  }
-
   if (!existsSync(MOCK_DB_PATH)) {
-    const empty = createEmptyDb();
+    const empty = globalForPrisma.__mockDb || createEmptyDb();
     globalForPrisma.__mockDb = empty;
     return empty;
   }
@@ -103,9 +99,9 @@ function loadDb(): MockDb {
     globalForPrisma.__mockDb = normalized;
     return normalized;
   } catch {
-    const empty = createEmptyDb();
-    globalForPrisma.__mockDb = empty;
-    return empty;
+    const fallback = globalForPrisma.__mockDb || createEmptyDb();
+    globalForPrisma.__mockDb = fallback;
+    return fallback;
   }
 }
 
