@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { AppRole } from "@/lib/auth-store";
 
 type NavItem = { href: Route; label: string };
@@ -55,6 +55,7 @@ const navGroups: NavGroup[] = [
 
 export default function TopNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [viewer, setViewer] = useState<Viewer>(null);
   const [isLoadingViewer, setIsLoadingViewer] = useState(true);
@@ -63,21 +64,36 @@ export default function TopNav() {
 
   const loadViewer = useCallback(async () => {
     setIsLoadingViewer(true);
-    const response = await fetch("/api/auth/me", { cache: "no-store" });
-    if (!response.ok) {
+
+    try {
+      const response = await fetch("/api/auth/me", { cache: "no-store", credentials: "include" });
+      if (!response.ok) {
+        setViewer(null);
+        setIsLoadingViewer(false);
+        return;
+      }
+
+      const payload = (await response.json()) as { data: Viewer };
+      setViewer(payload.data);
+      setIsLoadingViewer(false);
+    } catch {
       setViewer(null);
       setIsLoadingViewer(false);
-      return;
     }
-
-    const payload = (await response.json()) as { data: Viewer };
-    setViewer(payload.data);
-    setIsLoadingViewer(false);
   }, []);
 
   useEffect(() => {
     void loadViewer();
   }, [loadViewer, pathname]);
+
+  useEffect(() => {
+    const onFocus = () => {
+      void loadViewer();
+    };
+
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [loadViewer]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -103,7 +119,7 @@ export default function TopNav() {
 
   async function handleLogout() {
     setAuthMessage(null);
-    const response = await fetch("/api/auth/logout", { method: "POST" });
+    const response = await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
 
     if (!response.ok) {
       setAuthMessage("Unable to logout right now. Please try again.");
@@ -112,6 +128,7 @@ export default function TopNav() {
 
     setViewer(null);
     setAuthMessage("Logged out.");
+    router.refresh();
   }
 
   return (

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { hashPassword } from "@/lib/auth-store";
 import { DbTimeoutError, withDbTimeout } from "@/lib/db-timeout";
 import { prisma } from "@/lib/prisma";
+import { sendSignupConfirmationEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
   try {
@@ -33,6 +34,12 @@ export async function POST(request: Request) {
         timezone: body.timezone
       }
     }));
+
+    await sendSignupConfirmationEmail({
+      recipientEmail: user.email,
+      recipientName: user.fullName,
+      role: user.role
+    });
 
     return NextResponse.json({ data: { id: user.id, name: user.fullName, email: user.email, role: user.role, timezone: user.timezone } }, { status: 201 });
   } catch (error) {

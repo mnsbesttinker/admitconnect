@@ -79,3 +79,4 @@ Open `http://localhost:3000`.
 
 - Chat/admin verification/review flows still include MVP placeholders and some in-memory logic.
 - Core tutor profile + slot + booking flow is now persisted to PostgreSQL.
+- Signup confirmations and booking confirmations are delivered through Resend when `RESEND_API_KEY` and `RESEND_FROM_EMAIL` are configured; otherwise they are logged as stubs.

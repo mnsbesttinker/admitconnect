@@ -13,6 +13,7 @@ async function postJsonWithTimeout(url: string, body: unknown, timeoutMs = 12000
 
   try {
     return await fetch(url, {
+      credentials: "include",
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
@@ -73,6 +74,7 @@ export default function SignupPage() {
       return;
     }
 
+    router.refresh();
     router.push(role === "tutor" ? "/tutor/onboarding" : "/student/onboarding");
   }
 
