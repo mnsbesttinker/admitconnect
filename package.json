@@ -11,7 +11,10 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "db:up": "docker compose up -d db",
-    "db:down": "docker compose down"
+    "db:down": "docker compose down",
+    "prisma:studio": "prisma studio",
+    "db:shell": "docker exec -it admitconnect-postgres psql -U admitconnect -d admitconnect",
+    "db:reset": "prisma migrate reset --force"
   },
   "dependencies": {
     "next": "14.2.5",

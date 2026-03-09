@@ -58,6 +58,53 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+
+## View and manage database data
+
+### Option A: Prisma Studio (easiest UI)
+
+```bash
+npm run prisma:studio
+```
+
+Then open the local URL shown in terminal (usually `http://localhost:5555`).
+
+You can:
+- browse tables (`User`, `TutorProfile`, `AvailabilitySlot`, `Booking`)
+- create rows
+- edit rows inline
+- delete rows
+
+### Option B: SQL shell (direct Postgres access)
+
+```bash
+npm run db:shell
+```
+
+Useful commands inside `psql`:
+
+```sql
+-- list tables
+\dt
+
+-- see users
+SELECT id, email, role, timezone, "createdAt" FROM "User" ORDER BY "createdAt" DESC;
+
+-- delete one booking by id
+DELETE FROM "Booking" WHERE id = 'REPLACE_WITH_BOOKING_ID';
+
+-- delete one user by email (cascades related profile/slots/bookings)
+DELETE FROM "User" WHERE email = 'name@example.com';
+```
+
+### Reset all local data
+
+```bash
+npm run db:reset
+```
+
+This drops and recreates the schema from migrations (destructive).
+
 ## API surface (active)
 
 - `POST /api/auth/signup`
