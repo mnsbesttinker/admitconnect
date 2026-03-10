@@ -12,7 +12,12 @@ function readCookieToken(headers: Headers) {
   const cookieHeader = headers.get("cookie") || "";
   const parts = cookieHeader.split(";").map((part) => part.trim());
   const tokenPart = parts.find((part) => part.startsWith("admitconnect_session="));
-  return tokenPart?.split("=")[1];
+  if (!tokenPart) {
+    return undefined;
+  }
+
+  const rawValue = tokenPart.slice("admitconnect_session=".length);
+  return decodeURIComponent(rawValue);
 }
 
 export function readIdentityFromHeaders(headers: Headers): RequestIdentity {

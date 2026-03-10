@@ -6,6 +6,24 @@ import { useRouter } from "next/navigation";
 const roles = ["student", "tutor"] as const;
 type Role = (typeof roles)[number];
 
+
+async function postJsonWithTimeout(url: string, body: unknown, timeoutMs = 12000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      credentials: "include",
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+      signal: controller.signal
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export default function SignupPage() {
   const router = useRouter();
   const timezoneGuess = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC", []);
@@ -23,11 +41,14 @@ export default function SignupPage() {
     setError(null);
     setIsSubmitting(true);
 
-    const signupRes = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name, email, password, role, timezone })
-    });
+    let signupRes: Response;
+    try {
+      signupRes = await postJsonWithTimeout("/api/auth/signup", { name, email, password, role, timezone });
+    } catch {
+      setError("Signup request timed out. Check your database deployment/config and try again.");
+      setIsSubmitting(false);
+      return;
+    }
 
     if (!signupRes.ok) {
       const payload = (await signupRes.json()) as { error?: string };
@@ -36,11 +57,14 @@ export default function SignupPage() {
       return;
     }
 
-    const loginRes = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
+    let loginRes: Response;
+    try {
+      loginRes = await postJsonWithTimeout("/api/auth/login", { email, password });
+    } catch {
+      setError("Auto-login request timed out. Please try logging in manually.");
+      setIsSubmitting(false);
+      return;
+    }
 
     setIsSubmitting(false);
 
@@ -50,6 +74,7 @@ export default function SignupPage() {
       return;
     }
 
+    router.refresh();
     router.push(role === "tutor" ? "/tutor/onboarding" : "/student/onboarding");
   }
 
