@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  student
+  tutor
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  completed
+  cancelled
+}
+
+model User {
+  id           String   @id @default(uuid())
+  fullName     String
+  email        String   @unique
+  passwordHash String
+  role         UserRole
+  timezone     String
+  createdAt    DateTime @default(now())
+
+  tutorProfile   TutorProfile?
+  studentProfile StudentProfile?
+
+  tutorAvailability AvailabilitySlot[] @relation("TutorAvailability")
+  tutorBookings     Booking[]          @relation("TutorBookings")
+  studentBookings   Booking[]          @relation("StudentBookings")
+}
+
+model TutorProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  school      String
+  major       String
+  bio         String
+  specialties String
+  hourlyRate  Int
+  isVerified  Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StudentProfile {
+  id            String  @id @default(uuid())
+  userId        String  @unique
+  country       String?
+  intendedMajor String?
+  curriculum    String?
+  satScore      Int?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AvailabilitySlot {
+  id           String   @id @default(uuid())
+  tutorUserId  String
+  startTimeUtc DateTime
+  endTimeUtc   DateTime
+  isBooked     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  tutor    User      @relation("TutorAvailability", fields: [tutorUserId], references: [id], onDelete: Cascade)
+  booking  Booking?
+
+  @@index([tutorUserId, startTimeUtc])
+}
+
+model Booking {
+  id            String        @id @default(uuid())
+  studentUserId String
+  tutorUserId   String
+  slotId        String        @unique
+  status        BookingStatus @default(confirmed)
+  googleMeetLink String?
+  createdAt     DateTime      @default(now())
+
+  student User             @relation("StudentBookings", fields: [studentUserId], references: [id], onDelete: Cascade)
+  tutor   User             @relation("TutorBookings", fields: [tutorUserId], references: [id], onDelete: Cascade)
+  slot    AvailabilitySlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+
+  @@index([studentUserId, createdAt])
+  @@index([tutorUserId, createdAt])
+}
