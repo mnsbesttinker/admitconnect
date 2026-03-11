@@ -1,0 +1,37 @@
+{
+  "name": "admitconnect",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "prisma:studio": "prisma studio",
+    "db:shell": "docker exec -it admitconnect-postgres psql -U admitconnect -d admitconnect",
+    "db:reset": "prisma migrate reset --force",
+    "studio": "npm run prisma:studio",
+    "db:studio": "npm run prisma:studio",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "next": "14.2.5",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "@prisma/client": "5.17.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.10",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "eslint": "8.57.0",
+    "eslint-config-next": "14.2.5",
+    "typescript": "5.5.3",
+    "prisma": "5.17.0"
+  }
+}
