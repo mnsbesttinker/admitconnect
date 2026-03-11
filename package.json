@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate",
@@ -16,7 +16,8 @@
     "db:shell": "docker exec -it admitconnect-postgres psql -U admitconnect -d admitconnect",
     "db:reset": "prisma migrate reset --force",
     "studio": "npm run prisma:studio",
-    "db:studio": "npm run prisma:studio"
+    "db:studio": "npm run prisma:studio",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "next": "14.2.5",

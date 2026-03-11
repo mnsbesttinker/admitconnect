@@ -161,3 +161,8 @@ Expected response:
 ```
 
 If `ok` is false, the `error` field will tell you whether it is auth/network/migration related.
+
+
+- **PrismaClientInitializationError on Vercel about outdated Prisma Client**
+  - This repo now runs `prisma generate` automatically in both `postinstall` and `build`.
+  - If your deployment was created before this fix, trigger a fresh redeploy so dependencies rebuild and Prisma Client regenerates.
