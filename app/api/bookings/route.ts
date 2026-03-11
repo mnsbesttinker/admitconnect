@@ -51,16 +51,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: result.error }, { status: 409 });
   }
 
-  const meetLink = await createMeetingLinkForBooking(result.booking.id);
+  let meetLink: string;
 
-  if (!meetLink) {
+  try {
+    meetLink = await createMeetingLinkForBooking(result.booking.id);
+  } catch (error) {
     await prisma.$transaction([
       prisma.booking.update({ where: { id: result.booking.id }, data: { status: "cancelled" } }),
       prisma.availabilitySlot.update({ where: { id: result.booking.slot.id }, data: { isBooked: false } })
     ]);
 
+    const detail = error instanceof Error ? error.message : "Unknown Google Meet integration error";
     return NextResponse.json(
-      { error: "Unable to generate Google Meet link for this booking. Verify Google Calendar integration settings." },
+      {
+        error: "Unable to generate Google Meet link for this booking.",
+        detail
+      },
       { status: 503 }
     );
   }

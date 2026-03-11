@@ -75,6 +75,7 @@ export default function TopNav() {
 
       const payload = (await response.json()) as { data: Viewer };
       setViewer(payload.data);
+      setAuthMessage(null);
       setIsLoadingViewer(false);
     } catch {
       setViewer(null);
@@ -128,6 +129,7 @@ export default function TopNav() {
 
     setViewer(null);
     setAuthMessage("Logged out.");
+    window.setTimeout(() => setAuthMessage(null), 3000);
     router.refresh();
   }
 

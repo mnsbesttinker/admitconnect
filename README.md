@@ -26,25 +26,31 @@ DATABASE_URL="postgresql://admitconnect:admitconnect@localhost:5432/admitconnect
 ADMITCONNECT_SESSION_SECRET="replace-with-a-long-random-secret"
 RESEND_API_KEY="" # optional
 RESEND_FROM_EMAIL="" # optional
+GOOGLE_CALENDAR_ID=""
+GOOGLE_OAUTH_CLIENT_ID=""
+GOOGLE_OAUTH_CLIENT_SECRET=""
+GOOGLE_OAUTH_REFRESH_TOKEN=""
 GOOGLE_SERVICE_ACCOUNT_EMAIL=""
 GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY=""
-GOOGLE_CALENDAR_ID=""
 ```
 
 
 ## Google Meet links for bookings
 
-Bookings can create a real Google Meet URL and include it in both student/tutor confirmation emails.
+Bookings create a real Google Meet URL and include it in both student/tutor confirmation emails.
 
-1. Create a Google Cloud service account with Calendar API enabled.
-2. Share the target Google Calendar with that service account email (Editor access).
-3. Configure these env vars (local/Vercel):
-   - `GOOGLE_SERVICE_ACCOUNT_EMAIL`
-   - `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` (preserve newlines, or use `\n` escaped newlines)
-   - `GOOGLE_CALENDAR_ID` (for primary calendar this is often the owner email)
-4. Redeploy and create a booking.
+Choose one auth mode:
 
-If Meet generation fails, booking creation now returns an error and releases the slot so the student can retry after configuration is fixed.
+1. **OAuth refresh token (recommended):**
+   - Set `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REFRESH_TOKEN`.
+   - Use a Google account that owns (or can edit) the target calendar.
+2. **Service account (advanced):**
+   - Set `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`.
+   - Share the target Google Calendar with the service-account email (Editor access).
+
+For either mode, set `GOOGLE_CALENDAR_ID` (often the owner email for a primary calendar), redeploy, and create a booking.
+
+If Meet generation fails, booking creation now returns an error payload with a `detail` field and releases the slot so the student can retry after configuration is fixed.
 
 ## Run a local PostgreSQL database
 

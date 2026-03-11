@@ -1,17 +1,9 @@
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 
-function getGoogleCalendarConfig() {
-  const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, "\n");
-  const calendarId = process.env.GOOGLE_CALENDAR_ID;
-
-  if (!clientEmail || !privateKey || !calendarId) {
-    return null;
-  }
-
-  return { clientEmail, privateKey, calendarId };
-}
+type GoogleTokenConfig =
+  | { mode: "oauth"; clientId: string; clientSecret: string; refreshToken: string }
+  | { mode: "service-account"; clientEmail: string; privateKey: string };
 
 function base64UrlEncode(input: string | Buffer) {
   return Buffer.from(input)
@@ -21,7 +13,30 @@ function base64UrlEncode(input: string | Buffer) {
     .replace(/\//g, "_");
 }
 
-async function getGoogleAccessToken(clientEmail: string, privateKey: string) {
+function readGoogleCalendarId() {
+  return process.env.GOOGLE_CALENDAR_ID || null;
+}
+
+function getGoogleTokenConfig(): GoogleTokenConfig | null {
+  const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+  const refreshToken = process.env.GOOGLE_OAUTH_REFRESH_TOKEN;
+
+  if (clientId && clientSecret && refreshToken) {
+    return { mode: "oauth", clientId, clientSecret, refreshToken };
+  }
+
+  const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, "\n");
+
+  if (clientEmail && privateKey) {
+    return { mode: "service-account", clientEmail, privateKey };
+  }
+
+  return null;
+}
+
+async function getServiceAccountAccessToken(clientEmail: string, privateKey: string) {
   const now = Math.floor(Date.now() / 1000);
   const header = { alg: "RS256", typ: "JWT" };
   const claimSet = {
@@ -47,17 +62,53 @@ async function getGoogleAccessToken(clientEmail: string, privateKey: string) {
 
   if (!tokenResponse.ok) {
     const detail = await tokenResponse.text();
-    throw new Error(`Failed to fetch Google access token (${tokenResponse.status}): ${detail}`);
+    throw new Error(`Service-account token request failed (${tokenResponse.status}): ${detail}`);
   }
 
   const tokenPayload = (await tokenResponse.json()) as { access_token: string };
   return tokenPayload.access_token;
 }
 
+async function getOAuthAccessToken(clientId: string, clientSecret: string, refreshToken: string) {
+  const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+      grant_type: "refresh_token"
+    }).toString()
+  });
+
+  if (!tokenResponse.ok) {
+    const detail = await tokenResponse.text();
+    throw new Error(`OAuth token refresh failed (${tokenResponse.status}): ${detail}`);
+  }
+
+  const tokenPayload = (await tokenResponse.json()) as { access_token: string };
+  return tokenPayload.access_token;
+}
+
+async function getGoogleAccessToken() {
+  const tokenConfig = getGoogleTokenConfig();
+  if (!tokenConfig) {
+    throw new Error(
+      "Google Calendar auth is not configured. Set OAuth refresh-token env vars or service-account env vars."
+    );
+  }
+
+  if (tokenConfig.mode === "oauth") {
+    return getOAuthAccessToken(tokenConfig.clientId, tokenConfig.clientSecret, tokenConfig.refreshToken);
+  }
+
+  return getServiceAccountAccessToken(tokenConfig.clientEmail, tokenConfig.privateKey);
+}
+
 export async function createMeetingLinkForBooking(bookingId: string) {
-  const config = getGoogleCalendarConfig();
-  if (!config) {
-    return null as string | null;
+  const calendarId = readGoogleCalendarId();
+  if (!calendarId) {
+    throw new Error("GOOGLE_CALENDAR_ID is not configured.");
   }
 
   const booking = await prisma.booking.findUnique({
@@ -70,61 +121,63 @@ export async function createMeetingLinkForBooking(bookingId: string) {
   });
 
   if (!booking) {
-    return null;
+    throw new Error("Booking was not found while creating Google Meet link.");
   }
 
-  try {
-    const accessToken = await getGoogleAccessToken(config.clientEmail, config.privateKey);
-    const eventResponse = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(config.calendarId)}/events?conferenceDataVersion=1`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json"
+  const accessToken = await getGoogleAccessToken();
+  const requestId = `${booking.id}-${Date.now()}`;
+
+  const eventResponse = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1&sendUpdates=all`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        summary: `AdmitConnect session: ${booking.student.fullName} & ${booking.tutor.fullName}`,
+        description: `Booking ID: ${booking.id}`,
+        start: {
+          dateTime: booking.slot.startTimeUtc.toISOString(),
+          timeZone: "UTC"
         },
-        body: JSON.stringify({
-          summary: `AdmitConnect session: ${booking.student.fullName} & ${booking.tutor.fullName}`,
-          description: `Booking ID: ${booking.id}`,
-          start: {
-            dateTime: booking.slot.startTimeUtc.toISOString(),
-            timeZone: "UTC"
-          },
-          end: {
-            dateTime: booking.slot.endTimeUtc.toISOString(),
-            timeZone: "UTC"
-          },
-          attendees: [
-            { email: booking.student.email, displayName: booking.student.fullName },
-            { email: booking.tutor.email, displayName: booking.tutor.fullName }
-          ],
-          conferenceData: {
-            createRequest: {
-              requestId: booking.id,
-              conferenceSolutionKey: { type: "hangoutsMeet" }
-            }
+        end: {
+          dateTime: booking.slot.endTimeUtc.toISOString(),
+          timeZone: "UTC"
+        },
+        attendees: [
+          { email: booking.student.email, displayName: booking.student.fullName },
+          { email: booking.tutor.email, displayName: booking.tutor.fullName }
+        ],
+        conferenceData: {
+          createRequest: {
+            requestId,
+            conferenceSolutionKey: { type: "hangoutsMeet" }
           }
-        })
-      }
-    );
-
-    if (!eventResponse.ok) {
-      const detail = await eventResponse.text();
-      throw new Error(`Failed to create Google Calendar event (${eventResponse.status}): ${detail}`);
+        }
+      })
     }
+  );
 
-    const eventPayload = (await eventResponse.json()) as {
-      hangoutLink?: string;
-      conferenceData?: { entryPoints?: Array<{ entryPointType?: string; uri?: string }> };
-    };
-
-    return (
-      eventPayload.hangoutLink ||
-      eventPayload.conferenceData?.entryPoints?.find((entry) => entry.entryPointType === "video")?.uri ||
-      null
-    );
-  } catch (error) {
-    console.error("[meet:create]", error);
-    return null;
+  if (!eventResponse.ok) {
+    const detail = await eventResponse.text();
+    throw new Error(`Google Calendar event creation failed (${eventResponse.status}): ${detail}`);
   }
+
+  const eventPayload = (await eventResponse.json()) as {
+    hangoutLink?: string;
+    conferenceData?: { entryPoints?: Array<{ entryPointType?: string; uri?: string }> };
+  };
+
+  const meetLink =
+    eventPayload.hangoutLink ||
+    eventPayload.conferenceData?.entryPoints?.find((entry) => entry.entryPointType === "video")?.uri ||
+    null;
+
+  if (!meetLink) {
+    throw new Error("Google Calendar event was created without a Meet video link.");
+  }
+
+  return meetLink;
 }
