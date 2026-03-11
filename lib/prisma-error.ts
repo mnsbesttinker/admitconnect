@@ -1,8 +1,24 @@
-export function mapPrismaError(error: unknown): string | null {
-  const maybe = error as { code?: string; message?: string } | null;
-  const code = maybe?.code;
+export type PrismaErrorSummary = {
+  name: string;
+  code: string | null;
+  message: string;
+};
 
-  switch (code) {
+export function summarizePrismaError(error: unknown): PrismaErrorSummary {
+  const maybe = error as { code?: string; name?: string; message?: string } | null;
+
+  return {
+    name: maybe?.name || "UnknownError",
+    code: maybe?.code || null,
+    message: maybe?.message || "Unknown Prisma/database error"
+  };
+}
+
+export function mapPrismaError(error: unknown): string | null {
+  const summary = summarizePrismaError(error);
+  const message = summary.message.toLowerCase();
+
+  switch (summary.code) {
     case "P1000":
       return "Database auth failed. Check DATABASE_URL username/password.";
     case "P1001":
@@ -15,7 +31,19 @@ export function mapPrismaError(error: unknown): string | null {
       break;
   }
 
-  if (maybe?.message?.includes("does not exist")) {
+  if (message.includes("can't reach database server") || message.includes("could not connect") || message.includes("connection refused")) {
+    return "Database host is unreachable. Check DATABASE_URL host/network/allowlist.";
+  }
+
+  if (message.includes("authentication failed") || message.includes("password authentication failed")) {
+    return "Database auth failed. Check DATABASE_URL username/password.";
+  }
+
+  if (message.includes("no pg_hba.conf entry") || message.includes("ssl")) {
+    return "Database requires SSL/network permission. Ensure Neon URL includes sslmode=require and host access is allowed.";
+  }
+
+  if (message.includes("relation") && message.includes("does not exist")) {
     return "Database schema appears missing. Run prisma migrate deploy against the same DATABASE_URL used in production.";
   }
 

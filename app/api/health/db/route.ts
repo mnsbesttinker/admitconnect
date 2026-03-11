@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { withDbTimeout } from "@/lib/db-timeout";
 import { prisma } from "@/lib/prisma";
-import { mapPrismaError } from "@/lib/prisma-error";
+import { mapPrismaError, summarizePrismaError } from "@/lib/prisma-error";
+
+function compactMessage(input: string, max = 260) {
+  return input.replace(/\s+/g, " ").trim().slice(0, max);
+}
 
 export async function GET() {
   if (!process.env.DATABASE_URL) {
@@ -23,6 +27,19 @@ export async function GET() {
     return NextResponse.json({ ok: true, databaseReachable: true, userTableExists });
   } catch (error) {
     const mapped = mapPrismaError(error);
-    return NextResponse.json({ ok: false, error: mapped || "Database check failed" }, { status: 503 });
+    const summary = summarizePrismaError(error);
+
+    return NextResponse.json(
+      {
+        ok: false,
+        error: mapped || "Database check failed",
+        diagnostics: {
+          name: summary.name,
+          code: summary.code,
+          message: compactMessage(summary.message)
+        }
+      },
+      { status: 503 }
+    );
   }
 }
