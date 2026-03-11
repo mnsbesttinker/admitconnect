@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { hashPassword } from "@/lib/auth-store";
 import { DbTimeoutError, withDbTimeout } from "@/lib/db-timeout";
 import { prisma } from "@/lib/prisma";
+import { mapPrismaError } from "@/lib/prisma-error";
 import { sendSignupConfirmationEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
@@ -45,6 +46,11 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof DbTimeoutError) {
       return NextResponse.json({ error: "Database connection timed out. Verify DATABASE_URL and that Postgres is reachable." }, { status: 503 });
+    }
+
+    const mapped = mapPrismaError(error);
+    if (mapped) {
+      return NextResponse.json({ error: mapped }, { status: 503 });
     }
 
     console.error("[auth/signup]", error);

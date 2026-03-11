@@ -121,6 +121,7 @@ This drops and recreates the schema from migrations (destructive).
 - `GET /api/availability`
 - `POST /api/bookings`
 - `GET /api/bookings/my`
+- `GET /api/health/db`
 
 ## Notes
 
@@ -145,3 +146,18 @@ npm run
 
 - **Prisma commands fail with `prisma: command not found`**
   - Run `npm install` first so local binaries are available in `node_modules/.bin`.
+
+
+## Production DB quick-check
+
+After setting `DATABASE_URL` on Vercel production and redeploying, open:
+
+- `https://<your-domain>/api/health/db`
+
+Expected response:
+
+```json
+{ "ok": true, "databaseReachable": true, "userTableExists": true }
+```
+
+If `ok` is false, the `error` field will tell you whether it is auth/network/migration related.
