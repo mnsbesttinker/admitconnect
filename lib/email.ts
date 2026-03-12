@@ -27,6 +27,9 @@ async function deliverEmail(payload: { to: string; subject: string; html: string
     return;
   }
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -38,8 +41,9 @@ async function deliverEmail(payload: { to: string; subject: string; html: string
       to: payload.to,
       subject: payload.subject,
       html: payload.html
-    })
-  });
+    }),
+    signal: controller.signal
+  }).finally(() => clearTimeout(timeout));
 
   if (!response.ok) {
     const errorBody = await response.text();

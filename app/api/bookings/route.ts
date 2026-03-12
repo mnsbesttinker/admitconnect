@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
   await prisma.booking.update({ where: { id: result.booking.id }, data: { googleMeetLink: meetLink } });
 
-  await Promise.all([
+  void Promise.allSettled([
     sendBookingConfirmationEmail({
       recipientEmail: result.booking.student.email,
       recipientName: result.booking.student.fullName,
@@ -94,5 +94,5 @@ export async function POST(request: NextRequest) {
     })
   ]);
 
-  return NextResponse.json({ data: { id: result.booking.id } }, { status: 201 });
+  return NextResponse.json({ data: { id: result.booking.id, meetLink } }, { status: 201 });
 }

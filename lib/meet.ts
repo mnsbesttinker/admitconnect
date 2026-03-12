@@ -5,6 +5,18 @@ type GoogleTokenConfig =
   | { mode: "oauth"; clientId: string; clientSecret: string; refreshToken: string }
   | { mode: "service-account"; clientEmail: string; privateKey: string };
 
+
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = 12000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function base64UrlEncode(input: string | Buffer) {
   return Buffer.from(input)
     .toString("base64")
@@ -51,7 +63,7 @@ async function getServiceAccountAccessToken(clientEmail: string, privateKey: str
   const signature = crypto.createSign("RSA-SHA256").update(unsignedJwt).sign(privateKey);
   const assertion = `${unsignedJwt}.${base64UrlEncode(signature)}`;
 
-  const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+  const tokenResponse = await fetchWithTimeout("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
@@ -70,7 +82,7 @@ async function getServiceAccountAccessToken(clientEmail: string, privateKey: str
 }
 
 async function getOAuthAccessToken(clientId: string, clientSecret: string, refreshToken: string) {
-  const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+  const tokenResponse = await fetchWithTimeout("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
@@ -127,7 +139,7 @@ export async function createMeetingLinkForBooking(bookingId: string) {
   const accessToken = await getGoogleAccessToken();
   const requestId = `${booking.id}-${Date.now()}`;
 
-  const eventResponse = await fetch(
+  const eventResponse = await fetchWithTimeout(
     `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1&sendUpdates=all`,
     {
       method: "POST",

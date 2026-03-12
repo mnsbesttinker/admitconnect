@@ -64,19 +64,30 @@ export default function MentorProfilePage({ params }: { params: { id: string } }
 
   async function bookSlot(slotId: string) {
     setStatus("Booking...");
-    const response = await fetch("/api/bookings", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ slotId })
-    });
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 20000);
 
-    const payload = await response.json();
-    if (!response.ok) {
-      setStatus(payload.error || "Booking failed");
-      return;
+    try {
+      const response = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ slotId }),
+        signal: controller.signal
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        const detail = payload.detail ? ` (${payload.detail})` : "";
+        setStatus((payload.error || "Booking failed") + detail);
+        return;
+      }
+
+      router.push(`/bookings/success/${payload.data.id}`);
+    } catch {
+      setStatus("Booking request timed out. Please retry; if this persists, verify Google Calendar credentials.");
+    } finally {
+      window.clearTimeout(timeout);
     }
-
-    router.push(`/bookings/success/${payload.data.id}`);
   }
 
   const zone = viewer?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
