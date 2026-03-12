@@ -75,16 +75,29 @@ export default function MentorProfilePage({ params }: { params: { id: string } }
         signal: controller.signal
       });
 
-      const payload = await response.json();
+      const isJson = (response.headers.get("content-type") || "").includes("application/json");
+      const payload = isJson ? (await response.json()) as { error?: string; detail?: string; data?: { id: string } } : null;
+
       if (!response.ok) {
-        const detail = payload.detail ? ` (${payload.detail})` : "";
-        setStatus((payload.error || "Booking failed") + detail);
+        const detail = payload?.detail ? ` (${payload.detail})` : "";
+        setStatus((payload?.error || `Booking failed (HTTP ${response.status})`) + detail);
+        return;
+      }
+
+      if (!payload?.data?.id) {
+        setStatus("Booking created but server returned an unexpected response shape.");
         return;
       }
 
       router.push(`/bookings/success/${payload.data.id}`);
-    } catch {
-      setStatus("Booking request timed out. Please retry; if this persists, verify Google Calendar credentials.");
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        setStatus("Booking request timed out. Please retry; if this persists, verify Google Calendar credentials.");
+      } else if (error instanceof Error) {
+        setStatus(`Booking failed before completion: ${error.message}`);
+      } else {
+        setStatus("Booking failed before completion due to an unknown client/network error.");
+      }
     } finally {
       window.clearTimeout(timeout);
     }
