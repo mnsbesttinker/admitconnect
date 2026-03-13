@@ -158,8 +158,7 @@ export async function createMeetingLinkForBooking(bookingId: string) {
     },
     conferenceData: {
       createRequest: {
-        requestId,
-        conferenceSolutionKey: { type: "hangoutsMeet" }
+        requestId
       }
     }
   };

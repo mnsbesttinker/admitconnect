@@ -53,6 +53,8 @@ For either mode, set `GOOGLE_CALENDAR_ID` (often the owner email for a primary c
 
 If Meet generation fails, booking creation now returns an error payload with a `detail` field and releases the slot so the student can retry after configuration is fixed.
 
+Note: event creation now lets Google pick the conference solution automatically (instead of forcing a hardcoded conference type) to avoid `Invalid conference type value` errors on calendars/accounts that reject a fixed type.
+
 ## Run a local PostgreSQL database
 
 ```bash
