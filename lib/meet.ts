@@ -139,6 +139,66 @@ async function wait(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function pollEventForMeetLink(calendarId: string, eventId: string, accessToken: string, pollDelaysMs: number[]) {
+  let meetLink: string | null = null;
+  let conferenceStatusCode = "unknown";
+
+  for (const delayMs of pollDelaysMs) {
+    await wait(delayMs);
+    const pollResponse = await fetchWithTimeout(
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}?conferenceDataVersion=1`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json"
+        }
+      },
+      2500
+    );
+
+    if (!pollResponse.ok) {
+      continue;
+    }
+
+    const polledPayload = (await pollResponse.json()) as {
+      hangoutLink?: string;
+      conferenceData?: {
+        entryPoints?: Array<{ entryPointType?: string; uri?: string }>;
+        createRequest?: { status?: { statusCode?: string } };
+      };
+    };
+
+    conferenceStatusCode = polledPayload.conferenceData?.createRequest?.status?.statusCode || conferenceStatusCode;
+    meetLink = extractMeetLinkFromEventPayload(polledPayload);
+    if (meetLink || conferenceStatusCode === "failure") {
+      break;
+    }
+  }
+
+  return { meetLink, conferenceStatusCode };
+}
+
+async function reRequestConferenceForEvent(calendarId: string, eventId: string, accessToken: string, requestId: string) {
+  const patchResponse = await fetchWithTimeout(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}?conferenceDataVersion=1&sendUpdates=none`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        conferenceData: {
+          createRequest: { requestId }
+        }
+      })
+    }
+  );
+
+  return patchResponse.ok;
+}
+
 export async function createMeetingLinkForBooking(bookingId: string) {
   const calendarId = readGoogleCalendarId();
   if (!calendarId) {
@@ -216,42 +276,22 @@ export async function createMeetingLinkForBooking(bookingId: string) {
   let conferenceStatusCode = eventPayload.conferenceData?.createRequest?.status?.statusCode || "unknown";
 
   if (!meetLink && eventPayload.id) {
-    const pollDelaysMs = [800, 1200, 1600, 2200, 3000];
+    const firstPoll = await pollEventForMeetLink(calendarId, eventPayload.id, authContext.accessToken, [800, 1200, 1600, 2200, 3000]);
+    meetLink = firstPoll.meetLink;
+    conferenceStatusCode = firstPoll.conferenceStatusCode;
 
-    for (const delayMs of pollDelaysMs) {
-      await wait(delayMs);
-      const pollResponse = await fetchWithTimeout(
-        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventPayload.id)}?conferenceDataVersion=1`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${authContext.accessToken}`,
-            "Content-Type": "application/json"
-          }
-        },
-        2500
+    if (!meetLink && conferenceStatusCode !== "failure") {
+      const reRequestWorked = await reRequestConferenceForEvent(
+        calendarId,
+        eventPayload.id,
+        authContext.accessToken,
+        `${requestId}-retry`
       );
 
-      if (!pollResponse.ok) {
-        continue;
-      }
-
-      const polledPayload = (await pollResponse.json()) as {
-        hangoutLink?: string;
-        conferenceData?: {
-          entryPoints?: Array<{ entryPointType?: string; uri?: string }>;
-          createRequest?: { status?: { statusCode?: string } };
-        };
-      };
-
-      conferenceStatusCode = polledPayload.conferenceData?.createRequest?.status?.statusCode || conferenceStatusCode;
-      meetLink = extractMeetLinkFromEventPayload(polledPayload);
-      if (meetLink) {
-        break;
-      }
-
-      if (conferenceStatusCode === "failure") {
-        break;
+      if (reRequestWorked) {
+        const secondPoll = await pollEventForMeetLink(calendarId, eventPayload.id, authContext.accessToken, [1200, 1800, 2500, 3200]);
+        meetLink = secondPoll.meetLink;
+        conferenceStatusCode = secondPoll.conferenceStatusCode;
       }
     }
   }
