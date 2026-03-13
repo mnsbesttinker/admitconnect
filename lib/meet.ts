@@ -5,6 +5,10 @@ type GoogleTokenConfig =
   | { mode: "oauth"; clientId: string; clientSecret: string; refreshToken: string }
   | { mode: "service-account"; clientEmail: string; privateKey: string };
 
+type GoogleAuthContext = { mode: "oauth" | "service-account"; accessToken: string };
+
+const GOOGLE_SCOPE_CALENDAR = "https://www.googleapis.com/auth/calendar";
+const GOOGLE_SCOPE_MEET_SPACES = "https://www.googleapis.com/auth/meetings.space.created";
 
 async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = 12000) {
   const controller = new AbortController();
@@ -53,7 +57,7 @@ async function getServiceAccountAccessToken(clientEmail: string, privateKey: str
   const header = { alg: "RS256", typ: "JWT" };
   const claimSet = {
     iss: clientEmail,
-    scope: "https://www.googleapis.com/auth/calendar",
+    scope: `${GOOGLE_SCOPE_CALENDAR} ${GOOGLE_SCOPE_MEET_SPACES}`,
     aud: "https://oauth2.googleapis.com/token",
     iat: now,
     exp: now + 3600
@@ -102,109 +106,106 @@ async function getOAuthAccessToken(clientId: string, clientSecret: string, refre
   return tokenPayload.access_token;
 }
 
-async function getGoogleAuthContext() {
+async function getGoogleAuthContext(): Promise<GoogleAuthContext> {
   const tokenConfig = getGoogleTokenConfig();
   if (!tokenConfig) {
     throw new Error(
-      "Google Calendar auth is not configured. Set OAuth refresh-token env vars or service-account env vars."
+      "Google auth is not configured. Set OAuth refresh-token env vars or service-account env vars."
     );
   }
 
   if (tokenConfig.mode === "oauth") {
     return {
-      mode: "oauth" as const,
+      mode: "oauth",
       accessToken: await getOAuthAccessToken(tokenConfig.clientId, tokenConfig.clientSecret, tokenConfig.refreshToken)
     };
   }
 
   return {
-    mode: "service-account" as const,
+    mode: "service-account",
     accessToken: await getServiceAccountAccessToken(tokenConfig.clientEmail, tokenConfig.privateKey)
   };
 }
 
+async function createOpenMeetSpace(accessToken: string) {
+  const response = await fetchWithTimeout("https://meet.googleapis.com/v2/spaces", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      config: {
+        accessType: "OPEN"
+      }
+    })
+  });
 
-function extractMeetLinkFromEventPayload(eventPayload: {
-  hangoutLink?: string;
-  conferenceData?: { entryPoints?: Array<{ entryPointType?: string; uri?: string }> };
-}) {
-  return (
-    eventPayload.hangoutLink ||
-    eventPayload.conferenceData?.entryPoints?.find((entry) => entry.entryPointType === "video")?.uri ||
-    null
-  );
-}
-
-async function wait(ms: number) {
-  await new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function pollEventForMeetLink(calendarId: string, eventId: string, accessToken: string, pollDelaysMs: number[]) {
-  let meetLink: string | null = null;
-  let conferenceStatusCode = "unknown";
-
-  for (const delayMs of pollDelaysMs) {
-    await wait(delayMs);
-    const pollResponse = await fetchWithTimeout(
-      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}?conferenceDataVersion=1`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json"
-        }
-      },
-      2500
-    );
-
-    if (!pollResponse.ok) {
-      continue;
-    }
-
-    const polledPayload = (await pollResponse.json()) as {
-      hangoutLink?: string;
-      conferenceData?: {
-        entryPoints?: Array<{ entryPointType?: string; uri?: string }>;
-        createRequest?: { status?: { statusCode?: string } };
-      };
-    };
-
-    conferenceStatusCode = polledPayload.conferenceData?.createRequest?.status?.statusCode || conferenceStatusCode;
-    meetLink = extractMeetLinkFromEventPayload(polledPayload);
-    if (meetLink || conferenceStatusCode === "failure") {
-      break;
-    }
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`Google Meet space creation failed (${response.status}): ${detail}`);
   }
 
-  return { meetLink, conferenceStatusCode };
+  const payload = (await response.json()) as { meetingUri?: string };
+  if (!payload.meetingUri) {
+    throw new Error("Google Meet space was created without a meetingUri.");
+  }
+
+  return payload.meetingUri;
 }
 
-async function reRequestConferenceForEvent(calendarId: string, eventId: string, accessToken: string, requestId: string) {
-  const patchResponse = await fetchWithTimeout(
-    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}?conferenceDataVersion=1&sendUpdates=none`,
+async function createCalendarEventForBooking(args: {
+  accessToken: string;
+  calendarId: string;
+  authMode: GoogleAuthContext["mode"];
+  booking: {
+    id: string;
+    student: { fullName: string; email: string };
+    tutor: { fullName: string; email: string };
+    slot: { startTimeUtc: Date; endTimeUtc: Date };
+  };
+  meetLink: string;
+}) {
+  const attendees =
+    args.authMode === "oauth"
+      ? [
+          { email: args.booking.student.email, displayName: args.booking.student.fullName },
+          { email: args.booking.tutor.email, displayName: args.booking.tutor.fullName }
+        ]
+      : undefined;
+
+  const response = await fetchWithTimeout(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(args.calendarId)}/events?sendUpdates=${attendees ? "all" : "none"}`,
     {
-      method: "PATCH",
+      method: "POST",
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${args.accessToken}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        conferenceData: {
-          createRequest: { requestId }
-        }
+        summary: `AdmitConnect session: ${args.booking.student.fullName} & ${args.booking.tutor.fullName}`,
+        description: `Booking ID: ${args.booking.id}\nGoogle Meet: ${args.meetLink}`,
+        location: args.meetLink,
+        start: {
+          dateTime: args.booking.slot.startTimeUtc.toISOString(),
+          timeZone: "UTC"
+        },
+        end: {
+          dateTime: args.booking.slot.endTimeUtc.toISOString(),
+          timeZone: "UTC"
+        },
+        attendees
       })
     }
   );
 
-  return patchResponse.ok;
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`Google Calendar event creation failed (${response.status}): ${detail}`);
+  }
 }
 
 export async function createMeetingLinkForBooking(bookingId: string) {
-  const calendarId = readGoogleCalendarId();
-  if (!calendarId) {
-    throw new Error("GOOGLE_CALENDAR_ID is not configured.");
-  }
-
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: {
@@ -219,88 +220,26 @@ export async function createMeetingLinkForBooking(bookingId: string) {
   }
 
   const authContext = await getGoogleAuthContext();
-  const requestId = `${booking.id}-${Date.now()}`;
+  const meetLink = await createOpenMeetSpace(authContext.accessToken);
 
-  const eventPayloadBody: Record<string, unknown> = {
-    summary: `AdmitConnect session: ${booking.student.fullName} & ${booking.tutor.fullName}`,
-    description: `Booking ID: ${booking.id}`,
-    start: {
-      dateTime: booking.slot.startTimeUtc.toISOString(),
-      timeZone: "UTC"
-    },
-    end: {
-      dateTime: booking.slot.endTimeUtc.toISOString(),
-      timeZone: "UTC"
-    },
-    conferenceData: {
-      createRequest: {
-        requestId
-      }
-    }
-  };
-
-  if (authContext.mode === "oauth") {
-    eventPayloadBody.attendees = [
-      { email: booking.student.email, displayName: booking.student.fullName },
-      { email: booking.tutor.email, displayName: booking.tutor.fullName }
-    ];
-  }
-
-  const eventResponse = await fetchWithTimeout(
-    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1&sendUpdates=all`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${authContext.accessToken}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(eventPayloadBody)
-    }
-  );
-
-  if (!eventResponse.ok) {
-    const detail = await eventResponse.text();
-    throw new Error(`Google Calendar event creation failed (${eventResponse.status}): ${detail}`);
-  }
-
-  const eventPayload = (await eventResponse.json()) as {
-    id?: string;
-    hangoutLink?: string;
-    conferenceData?: {
-      entryPoints?: Array<{ entryPointType?: string; uri?: string }>;
-      createRequest?: { status?: { statusCode?: string } };
-    };
-  };
-
-  let meetLink = extractMeetLinkFromEventPayload(eventPayload);
-  let conferenceStatusCode = eventPayload.conferenceData?.createRequest?.status?.statusCode || "unknown";
-
-  if (!meetLink && eventPayload.id) {
-    const firstPoll = await pollEventForMeetLink(calendarId, eventPayload.id, authContext.accessToken, [800, 1200, 1600, 2200, 3000]);
-    meetLink = firstPoll.meetLink;
-    conferenceStatusCode = firstPoll.conferenceStatusCode;
-
-    if (!meetLink && conferenceStatusCode !== "failure") {
-      const reRequestWorked = await reRequestConferenceForEvent(
+  const calendarId = readGoogleCalendarId();
+  if (calendarId) {
+    try {
+      await createCalendarEventForBooking({
+        accessToken: authContext.accessToken,
         calendarId,
-        eventPayload.id,
-        authContext.accessToken,
-        `${requestId}-retry`
-      );
-
-      if (reRequestWorked) {
-        const secondPoll = await pollEventForMeetLink(calendarId, eventPayload.id, authContext.accessToken, [1200, 1800, 2500, 3200]);
-        meetLink = secondPoll.meetLink;
-        conferenceStatusCode = secondPoll.conferenceStatusCode;
-      }
+        authMode: authContext.mode,
+        booking: {
+          id: booking.id,
+          student: { fullName: booking.student.fullName, email: booking.student.email },
+          tutor: { fullName: booking.tutor.fullName, email: booking.tutor.email },
+          slot: { startTimeUtc: booking.slot.startTimeUtc, endTimeUtc: booking.slot.endTimeUtc }
+        },
+        meetLink
+      });
+    } catch (error) {
+      console.error("[meet:calendar:event]", error);
     }
-  }
-
-  if (!meetLink) {
-    throw new Error(
-      `Google Calendar event was created without a Meet video link (conference status: ${conferenceStatusCode}). ` +
-      "If status remains unknown/pending, verify calendar supports Meet generation for this account and try OAuth mode."
-    );
   }
 
   return meetLink;

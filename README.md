@@ -37,7 +37,7 @@ GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY=""
 
 ## Google Meet links for bookings
 
-Bookings create a real Google Meet URL and include it in both student/tutor confirmation emails.
+Bookings create a Google Meet space (Meet API) with `OPEN` access and include the returned Meet URL in both student/tutor confirmation emails.
 
 Choose one auth mode:
 
@@ -49,13 +49,10 @@ Choose one auth mode:
    - Share the target Google Calendar with the service-account email (Editor access).
    - Service-account mode creates the event + Meet link **without Calendar attendees** to avoid Google's `forbiddenForServiceAccounts` restriction. Student/tutor receive the Meet URL through Resend confirmation emails.
 
-For either mode, set `GOOGLE_CALENDAR_ID` (often the owner email for a primary calendar), redeploy, and create a booking.
+Set `GOOGLE_CALENDAR_ID` if you also want a companion Calendar event created with the Meet URL in its description/location. Calendar event creation is optional and booking continues even if event creation fails.
 
 If Meet generation fails, booking creation now returns an error payload with a `detail` field and releases the slot so the student can retry after configuration is fixed.
 
-Note: event creation now lets Google pick the conference solution automatically (instead of forcing a hardcoded conference type) to avoid `Invalid conference type value` errors on calendars/accounts that reject a fixed type.
-
-Meet link provisioning can be asynchronous on Google's side; booking now polls the created event with backoff and performs one conference re-request on the same event before failing, so transient "created without link" responses can resolve automatically.
 
 ## Run a local PostgreSQL database
 
