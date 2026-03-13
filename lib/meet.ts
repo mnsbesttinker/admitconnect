@@ -102,7 +102,7 @@ async function getOAuthAccessToken(clientId: string, clientSecret: string, refre
   return tokenPayload.access_token;
 }
 
-async function getGoogleAccessToken() {
+async function getGoogleAuthContext() {
   const tokenConfig = getGoogleTokenConfig();
   if (!tokenConfig) {
     throw new Error(
@@ -111,10 +111,16 @@ async function getGoogleAccessToken() {
   }
 
   if (tokenConfig.mode === "oauth") {
-    return getOAuthAccessToken(tokenConfig.clientId, tokenConfig.clientSecret, tokenConfig.refreshToken);
+    return {
+      mode: "oauth" as const,
+      accessToken: await getOAuthAccessToken(tokenConfig.clientId, tokenConfig.clientSecret, tokenConfig.refreshToken)
+    };
   }
 
-  return getServiceAccountAccessToken(tokenConfig.clientEmail, tokenConfig.privateKey);
+  return {
+    mode: "service-account" as const,
+    accessToken: await getServiceAccountAccessToken(tokenConfig.clientEmail, tokenConfig.privateKey)
+  };
 }
 
 export async function createMeetingLinkForBooking(bookingId: string) {
@@ -136,39 +142,44 @@ export async function createMeetingLinkForBooking(bookingId: string) {
     throw new Error("Booking was not found while creating Google Meet link.");
   }
 
-  const accessToken = await getGoogleAccessToken();
+  const authContext = await getGoogleAuthContext();
   const requestId = `${booking.id}-${Date.now()}`;
+
+  const eventPayloadBody: Record<string, unknown> = {
+    summary: `AdmitConnect session: ${booking.student.fullName} & ${booking.tutor.fullName}`,
+    description: `Booking ID: ${booking.id}`,
+    start: {
+      dateTime: booking.slot.startTimeUtc.toISOString(),
+      timeZone: "UTC"
+    },
+    end: {
+      dateTime: booking.slot.endTimeUtc.toISOString(),
+      timeZone: "UTC"
+    },
+    conferenceData: {
+      createRequest: {
+        requestId,
+        conferenceSolutionKey: { type: "hangoutsMeet" }
+      }
+    }
+  };
+
+  if (authContext.mode === "oauth") {
+    eventPayloadBody.attendees = [
+      { email: booking.student.email, displayName: booking.student.fullName },
+      { email: booking.tutor.email, displayName: booking.tutor.fullName }
+    ];
+  }
 
   const eventResponse = await fetchWithTimeout(
     `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1&sendUpdates=all`,
     {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${authContext.accessToken}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        summary: `AdmitConnect session: ${booking.student.fullName} & ${booking.tutor.fullName}`,
-        description: `Booking ID: ${booking.id}`,
-        start: {
-          dateTime: booking.slot.startTimeUtc.toISOString(),
-          timeZone: "UTC"
-        },
-        end: {
-          dateTime: booking.slot.endTimeUtc.toISOString(),
-          timeZone: "UTC"
-        },
-        attendees: [
-          { email: booking.student.email, displayName: booking.student.fullName },
-          { email: booking.tutor.email, displayName: booking.tutor.fullName }
-        ],
-        conferenceData: {
-          createRequest: {
-            requestId,
-            conferenceSolutionKey: { type: "hangoutsMeet" }
-          }
-        }
-      })
+      body: JSON.stringify(eventPayloadBody)
     }
   );
 

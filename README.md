@@ -47,6 +47,7 @@ Choose one auth mode:
 2. **Service account (advanced):**
    - Set `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`.
    - Share the target Google Calendar with the service-account email (Editor access).
+   - Service-account mode creates the event + Meet link **without Calendar attendees** to avoid Google's `forbiddenForServiceAccounts` restriction. Student/tutor receive the Meet URL through Resend confirmation emails.
 
 For either mode, set `GOOGLE_CALENDAR_ID` (often the owner email for a primary calendar), redeploy, and create a booking.
 
