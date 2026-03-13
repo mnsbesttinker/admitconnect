@@ -213,10 +213,13 @@ export async function createMeetingLinkForBooking(bookingId: string) {
   };
 
   let meetLink = extractMeetLinkFromEventPayload(eventPayload);
+  let conferenceStatusCode = eventPayload.conferenceData?.createRequest?.status?.statusCode || "unknown";
 
   if (!meetLink && eventPayload.id) {
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      await wait(1200);
+    const pollDelaysMs = [1200, 1500, 1800, 2200, 2600, 3000, 3500, 4200];
+
+    for (const delayMs of pollDelaysMs) {
+      await wait(delayMs);
       const pollResponse = await fetchWithTimeout(
         `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventPayload.id)}?conferenceDataVersion=1`,
         {
@@ -234,19 +237,29 @@ export async function createMeetingLinkForBooking(bookingId: string) {
 
       const polledPayload = (await pollResponse.json()) as {
         hangoutLink?: string;
-        conferenceData?: { entryPoints?: Array<{ entryPointType?: string; uri?: string }> };
+        conferenceData?: {
+          entryPoints?: Array<{ entryPointType?: string; uri?: string }>;
+          createRequest?: { status?: { statusCode?: string } };
+        };
       };
 
+      conferenceStatusCode = polledPayload.conferenceData?.createRequest?.status?.statusCode || conferenceStatusCode;
       meetLink = extractMeetLinkFromEventPayload(polledPayload);
       if (meetLink) {
+        break;
+      }
+
+      if (conferenceStatusCode === "failure") {
         break;
       }
     }
   }
 
   if (!meetLink) {
-    const statusCode = eventPayload.conferenceData?.createRequest?.status?.statusCode || "unknown";
-    throw new Error(`Google Calendar event was created without a Meet video link (conference status: ${statusCode}).`);
+    throw new Error(
+      `Google Calendar event was created without a Meet video link (conference status: ${conferenceStatusCode}). ` +
+      "If status remains unknown/pending, verify calendar supports Meet generation for this account and try OAuth mode."
+    );
   }
 
   return meetLink;
