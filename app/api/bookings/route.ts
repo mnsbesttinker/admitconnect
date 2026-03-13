@@ -31,19 +31,42 @@ export async function POST(request: NextRequest) {
         return { error: "Slot already booked" as const };
       }
 
-      const booking = await tx.booking.create({
-        data: {
-          studentUserId: identity.id,
-          tutorUserId: slot.tutorUserId,
-          slotId: slot.id,
-          status: "confirmed"
-        },
-        include: {
-          student: true,
-          tutor: true,
-          slot: true
-        }
+      const existingBooking = await tx.booking.findUnique({
+        where: { slotId: slot.id }
       });
+
+      if (existingBooking && existingBooking.status !== "cancelled") {
+        return { error: "Slot already booked" as const };
+      }
+
+      const booking = existingBooking
+        ? await tx.booking.update({
+            where: { id: existingBooking.id },
+            data: {
+              studentUserId: identity.id,
+              tutorUserId: slot.tutorUserId,
+              status: "confirmed",
+              googleMeetLink: null
+            },
+            include: {
+              student: true,
+              tutor: true,
+              slot: true
+            }
+          })
+        : await tx.booking.create({
+            data: {
+              studentUserId: identity.id,
+              tutorUserId: slot.tutorUserId,
+              slotId: slot.id,
+              status: "confirmed"
+            },
+            include: {
+              student: true,
+              tutor: true,
+              slot: true
+            }
+          });
 
       return { booking };
     });
