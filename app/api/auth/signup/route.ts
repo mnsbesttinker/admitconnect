@@ -4,6 +4,7 @@ import { DbTimeoutError, withDbTimeout } from "@/lib/db-timeout";
 import { prisma } from "@/lib/prisma";
 import { mapPrismaError } from "@/lib/prisma-error";
 import { sendSignupConfirmationEmail } from "@/lib/email";
+import { isSupportedTimezone } from "@/lib/timezones";
 
 export async function POST(request: Request) {
   try {
@@ -19,6 +20,10 @@ export async function POST(request: Request) {
 
     if (!["student", "tutor"].includes(body.role)) {
       return NextResponse.json({ error: "Invalid role. Only student or tutor is allowed for signup." }, { status: 400 });
+    }
+
+    if (!isSupportedTimezone(body.timezone)) {
+      return NextResponse.json({ error: "Invalid timezone selection" }, { status: 400 });
     }
 
     const existing = await withDbTimeout(prisma.user.findUnique({ where: { email: body.email.toLowerCase() } }));

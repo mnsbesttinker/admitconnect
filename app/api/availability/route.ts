@@ -16,11 +16,35 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
+  const start = new Date(body.startTimeUtc);
+  const end = new Date(body.endTimeUtc);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return NextResponse.json({ error: "Invalid datetime format" }, { status: 400 });
+  }
+
+  if (start >= end) {
+    return NextResponse.json({ error: "End time must be after start time" }, { status: 400 });
+  }
+
+  const duplicate = await prisma.availabilitySlot.findFirst({
+    where: {
+      tutorUserId: identity.id,
+      startTimeUtc: start,
+      endTimeUtc: end,
+      isBooked: false
+    }
+  });
+
+  if (duplicate) {
+    return NextResponse.json({ error: "An identical open slot already exists." }, { status: 409 });
+  }
+
   const slot = await prisma.availabilitySlot.create({
     data: {
       tutorUserId: identity.id,
-      startTimeUtc: new Date(body.startTimeUtc),
-      endTimeUtc: new Date(body.endTimeUtc)
+      startTimeUtc: start,
+      endTimeUtc: end
     }
   });
 

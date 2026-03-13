@@ -64,19 +64,43 @@ export default function MentorProfilePage({ params }: { params: { id: string } }
 
   async function bookSlot(slotId: string) {
     setStatus("Booking...");
-    const response = await fetch("/api/bookings", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ slotId })
-    });
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 60000);
 
-    const payload = await response.json();
-    if (!response.ok) {
-      setStatus(payload.error || "Booking failed");
-      return;
+    try {
+      const response = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ slotId }),
+        signal: controller.signal
+      });
+
+      const isJson = (response.headers.get("content-type") || "").includes("application/json");
+      const payload = isJson ? (await response.json()) as { error?: string; detail?: string; data?: { id: string } } : null;
+
+      if (!response.ok) {
+        const detail = payload?.detail ? ` (${payload.detail})` : "";
+        setStatus((payload?.error || `Booking failed (HTTP ${response.status})`) + detail);
+        return;
+      }
+
+      if (!payload?.data?.id) {
+        setStatus("Booking created but server returned an unexpected response shape.");
+        return;
+      }
+
+      router.push(`/bookings/success/${payload.data.id}`);
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        setStatus("Booking request timed out after 60s. Please retry; if this persists, verify Google Calendar credentials.");
+      } else if (error instanceof Error) {
+        setStatus(`Booking failed before completion: ${error.message}`);
+      } else {
+        setStatus("Booking failed before completion due to an unknown client/network error.");
+      }
+    } finally {
+      window.clearTimeout(timeout);
     }
-
-    router.push(`/bookings/success/${payload.data.id}`);
   }
 
   const zone = viewer?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";

@@ -26,7 +26,33 @@ DATABASE_URL="postgresql://admitconnect:admitconnect@localhost:5432/admitconnect
 ADMITCONNECT_SESSION_SECRET="replace-with-a-long-random-secret"
 RESEND_API_KEY="" # optional
 RESEND_FROM_EMAIL="" # optional
+GOOGLE_CALENDAR_ID=""
+GOOGLE_OAUTH_CLIENT_ID=""
+GOOGLE_OAUTH_CLIENT_SECRET=""
+GOOGLE_OAUTH_REFRESH_TOKEN=""
+GOOGLE_SERVICE_ACCOUNT_EMAIL=""
+GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY=""
 ```
+
+
+## Google Meet links for bookings
+
+Bookings create a Google Meet space (Meet API) with `OPEN` access and include the returned Meet URL in both student/tutor confirmation emails.
+
+Choose one auth mode:
+
+1. **OAuth refresh token (recommended):**
+   - Set `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REFRESH_TOKEN`.
+   - Use a Google account that owns (or can edit) the target calendar.
+2. **Service account (advanced):**
+   - Set `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`.
+   - Share the target Google Calendar with the service-account email (Editor access).
+   - Service-account mode creates the event + Meet link **without Calendar attendees** to avoid Google's `forbiddenForServiceAccounts` restriction. Student/tutor receive the Meet URL through Resend confirmation emails.
+
+Set `GOOGLE_CALENDAR_ID` if you also want a companion Calendar event created with the Meet URL in its description/location. Calendar event creation is optional and booking continues even if event creation fails.
+
+If Meet generation fails, booking creation now returns an error payload with a `detail` field and releases the slot so the student can retry after configuration is fixed.
+
 
 ## Run a local PostgreSQL database
 
@@ -166,3 +192,10 @@ If `ok` is false, the `error` field will tell you whether it is auth/network/mig
 - **PrismaClientInitializationError on Vercel about outdated Prisma Client**
   - This repo now runs `prisma generate` automatically in both `postinstall` and `build`.
   - If your deployment was created before this fix, trigger a fresh redeploy so dependencies rebuild and Prisma Client regenerates.
+
+
+### Common gotchas
+
+- Using an unverified sender address will block delivery.
+- Using `www.yourdomain.com` instead of root domain in Resend can cause DNS mismatch.
+- Forgetting to redeploy after adding env vars means the runtime may still have old values.

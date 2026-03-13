@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { SUPPORTED_TIMEZONES } from "@/lib/timezones";
 
 const roles = ["student", "tutor"] as const;
 type Role = (typeof roles)[number];
@@ -26,7 +27,10 @@ async function postJsonWithTimeout(url: string, body: unknown, timeoutMs = 12000
 
 export default function SignupPage() {
   const router = useRouter();
-  const timezoneGuess = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC", []);
+  const timezoneGuess = useMemo(() => {
+    const detected = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+    return SUPPORTED_TIMEZONES.includes(detected as (typeof SUPPORTED_TIMEZONES)[number]) ? detected : "America/Anchorage";
+  }, []);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -91,7 +95,11 @@ export default function SignupPage() {
               {roles.map((entry) => <option key={entry} value={entry}>{entry}</option>)}
             </select>
           </label>
-          <label>Timezone<input value={timezone} onChange={(event) => setTimezone(event.target.value)} required /></label>
+          <label>Timezone
+            <select value={timezone} onChange={(event) => setTimezone(event.target.value)} required>
+              {SUPPORTED_TIMEZONES.map((entry) => <option key={entry} value={entry}>{entry}</option>)}
+            </select>
+          </label>
           <button className="btn" disabled={isSubmitting} type="submit">{isSubmitting ? "Creating..." : "Sign up"}</button>
           {error && <p style={{ color: "#b10033", margin: 0 }}>{error}</p>}
         </form>

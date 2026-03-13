@@ -5,7 +5,7 @@ type BookingEmailInput = {
   startTimeUtcIso: string;
   recipientTimezone: string;
   roleLabel: "student" | "tutor";
-  meetLink: string | null;
+  meetLink: string;
 };
 
 type SignupEmailInput = {
@@ -27,6 +27,9 @@ async function deliverEmail(payload: { to: string; subject: string; html: string
     return;
   }
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -38,8 +41,9 @@ async function deliverEmail(payload: { to: string; subject: string; html: string
       to: payload.to,
       subject: payload.subject,
       html: payload.html
-    })
-  });
+    }),
+    signal: controller.signal
+  }).finally(() => clearTimeout(timeout));
 
   if (!response.ok) {
     const errorBody = await response.text();
@@ -55,7 +59,7 @@ export async function sendBookingConfirmationEmail(input: BookingEmailInput) {
     <p>Your booking is confirmed.</p>
     <p><strong>${input.roleLabel === "student" ? "Tutor" : "Student"}:</strong> ${input.counterpartName}</p>
     <p><strong>Time:</strong> ${bookingTime}</p>
-    <p><strong>Meeting:</strong> ${input.meetLink || "Meeting link will be sent shortly."}</p>
+    <p><strong>Meeting:</strong> <a href="${input.meetLink}">${input.meetLink}</a></p>
     <p>Thanks,<br/>AdmitConnect</p>
   `;
 

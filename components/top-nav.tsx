@@ -16,8 +16,7 @@ const navGroups: NavGroup[] = [
     title: "For Students",
     items: [
       { href: "/mentors", label: "Find a mentor" },
-      { href: "/book", label: "Book a session" },
-      { href: "/applicant", label: "Student dashboard" },
+      { href: "/book", label: "View / Create Bookings" },
       { href: "/pricing", label: "Pricing" },
       { href: "/messages/student", label: "Student messages" }
     ]
@@ -59,7 +58,6 @@ export default function TopNav() {
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [viewer, setViewer] = useState<Viewer>(null);
   const [isLoadingViewer, setIsLoadingViewer] = useState(true);
-  const [authMessage, setAuthMessage] = useState<string | null>(null);
   const navRef = useRef<HTMLElement | null>(null);
 
   const loadViewer = useCallback(async () => {
@@ -118,22 +116,18 @@ export default function TopNav() {
   }, []);
 
   async function handleLogout() {
-    setAuthMessage(null);
     const response = await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
 
     if (!response.ok) {
-      setAuthMessage("Unable to logout right now. Please try again.");
       return;
     }
 
     setViewer(null);
-    setAuthMessage("Logged out.");
     router.refresh();
   }
 
   return (
-    <>
-      <nav className="top-nav" ref={navRef}>
+    <nav className="top-nav" ref={navRef}>
         {navGroups.map((group) => {
           const isOpen = openKey === group.key;
           return (
@@ -171,7 +165,5 @@ export default function TopNav() {
           )}
         </div>
       </nav>
-      {authMessage && <p className="container muted" style={{ marginTop: "0.2rem" }}>{authMessage}</p>}
-    </>
   );
 }
