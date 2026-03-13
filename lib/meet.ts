@@ -123,6 +123,22 @@ async function getGoogleAuthContext() {
   };
 }
 
+
+function extractMeetLinkFromEventPayload(eventPayload: {
+  hangoutLink?: string;
+  conferenceData?: { entryPoints?: Array<{ entryPointType?: string; uri?: string }> };
+}) {
+  return (
+    eventPayload.hangoutLink ||
+    eventPayload.conferenceData?.entryPoints?.find((entry) => entry.entryPointType === "video")?.uri ||
+    null
+  );
+}
+
+async function wait(ms: number) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function createMeetingLinkForBooking(bookingId: string) {
   const calendarId = readGoogleCalendarId();
   if (!calendarId) {
@@ -188,17 +204,49 @@ export async function createMeetingLinkForBooking(bookingId: string) {
   }
 
   const eventPayload = (await eventResponse.json()) as {
+    id?: string;
     hangoutLink?: string;
-    conferenceData?: { entryPoints?: Array<{ entryPointType?: string; uri?: string }> };
+    conferenceData?: {
+      entryPoints?: Array<{ entryPointType?: string; uri?: string }>;
+      createRequest?: { status?: { statusCode?: string } };
+    };
   };
 
-  const meetLink =
-    eventPayload.hangoutLink ||
-    eventPayload.conferenceData?.entryPoints?.find((entry) => entry.entryPointType === "video")?.uri ||
-    null;
+  let meetLink = extractMeetLinkFromEventPayload(eventPayload);
+
+  if (!meetLink && eventPayload.id) {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      await wait(1200);
+      const pollResponse = await fetchWithTimeout(
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventPayload.id)}?conferenceDataVersion=1`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${authContext.accessToken}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      if (!pollResponse.ok) {
+        continue;
+      }
+
+      const polledPayload = (await pollResponse.json()) as {
+        hangoutLink?: string;
+        conferenceData?: { entryPoints?: Array<{ entryPointType?: string; uri?: string }> };
+      };
+
+      meetLink = extractMeetLinkFromEventPayload(polledPayload);
+      if (meetLink) {
+        break;
+      }
+    }
+  }
 
   if (!meetLink) {
-    throw new Error("Google Calendar event was created without a Meet video link.");
+    const statusCode = eventPayload.conferenceData?.createRequest?.status?.statusCode || "unknown";
+    throw new Error(`Google Calendar event was created without a Meet video link (conference status: ${statusCode}).`);
   }
 
   return meetLink;

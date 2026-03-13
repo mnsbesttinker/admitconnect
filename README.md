@@ -55,6 +55,8 @@ If Meet generation fails, booking creation now returns an error payload with a `
 
 Note: event creation now lets Google pick the conference solution automatically (instead of forcing a hardcoded conference type) to avoid `Invalid conference type value` errors on calendars/accounts that reject a fixed type.
 
+Meet link provisioning can be asynchronous on Google's side; booking now briefly polls the created event before failing so transient "created without link" responses can resolve automatically.
+
 ## Run a local PostgreSQL database
 
 ```bash
