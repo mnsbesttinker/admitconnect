@@ -65,7 +65,7 @@ export default function MentorProfilePage({ params }: { params: { id: string } }
   async function bookSlot(slotId: string) {
     setStatus("Booking...");
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 20000);
+    const timeout = window.setTimeout(() => controller.abort(), 60000);
 
     try {
       const response = await fetch("/api/bookings", {
@@ -92,7 +92,7 @@ export default function MentorProfilePage({ params }: { params: { id: string } }
       router.push(`/bookings/success/${payload.data.id}`);
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
-        setStatus("Booking request timed out. Please retry; if this persists, verify Google Calendar credentials.");
+        setStatus("Booking request timed out after 60s. Please retry; if this persists, verify Google Calendar credentials.");
       } else if (error instanceof Error) {
         setStatus(`Booking failed before completion: ${error.message}`);
       } else {

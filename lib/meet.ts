@@ -216,7 +216,7 @@ export async function createMeetingLinkForBooking(bookingId: string) {
   let conferenceStatusCode = eventPayload.conferenceData?.createRequest?.status?.statusCode || "unknown";
 
   if (!meetLink && eventPayload.id) {
-    const pollDelaysMs = [1200, 1500, 1800, 2200, 2600, 3000, 3500, 4200];
+    const pollDelaysMs = [800, 1200, 1600, 2200, 3000];
 
     for (const delayMs of pollDelaysMs) {
       await wait(delayMs);
@@ -228,7 +228,8 @@ export async function createMeetingLinkForBooking(bookingId: string) {
             Authorization: `Bearer ${authContext.accessToken}`,
             "Content-Type": "application/json"
           }
-        }
+        },
+        2500
       );
 
       if (!pollResponse.ok) {
