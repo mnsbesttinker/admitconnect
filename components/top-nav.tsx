@@ -5,6 +5,8 @@ import type { Route } from "next";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { AppRole } from "@/lib/auth-store";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 type NavItem = { href: Route; label: string };
 type NavGroup = { key: string; title: string; items: NavItem[] };
@@ -127,43 +129,50 @@ export default function TopNav() {
   }
 
   return (
-    <nav className="top-nav" ref={navRef}>
-        {navGroups.map((group) => {
-          const isOpen = openKey === group.key;
-          return (
-            <div className="nav-menu" key={group.key}>
-              <button
-                type="button"
-                className="nav-trigger"
-                aria-expanded={isOpen}
-                onClick={() => setOpenKey(isOpen ? null : group.key)}
-              >
-                {group.title}
-              </button>
-              {isOpen && (
-                <div className="nav-dropdown">
-                  {group.items.map((item) => (
-                    <Link key={item.href} href={item.href} className="nav-dropdown-link" onClick={() => setOpenKey(null)}>
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+    <nav className="flex flex-wrap items-center justify-end gap-2" ref={navRef}>
+      {navGroups.map((group) => {
+        const isOpen = openKey === group.key;
+        return (
+          <div className="relative" key={group.key}>
+            <Button
+              type="button"
+              variant="outline"
+              aria-expanded={isOpen}
+              onClick={() => setOpenKey(isOpen ? null : group.key)}
+            >
+              {group.title}
+            </Button>
+            {isOpen && (
+              <div className="bg-background absolute right-0 z-20 mt-2 grid min-w-56 gap-1 rounded-xl border p-2 shadow-lg">
+                {group.items.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="hover:bg-muted rounded-md px-3 py-2 text-sm"
+                    onClick={() => setOpenKey(null)}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
 
-        <div className="auth-chip" aria-live="polite">
-          {!isLoadingViewer && !viewer && <span className="muted">Guest</span>}
-          {isLoadingViewer && <span className="muted">Checking session...</span>}
-          {viewer && (
-            <>
-              <span>{viewer.name || viewer.email}</span>
-              {viewer.role && <span className="badge">{viewer.role}</span>}
-              <button type="button" onClick={handleLogout} className="btn btn-subtle">Logout</button>
-            </>
-          )}
-        </div>
-      </nav>
+      <div className="bg-muted/40 ml-2 flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm" aria-live="polite">
+        {!isLoadingViewer && !viewer && <span className="text-muted-foreground">Guest</span>}
+        {isLoadingViewer && <span className="text-muted-foreground">Checking session...</span>}
+        {viewer && (
+          <>
+            <span className="max-w-36 truncate">{viewer.name || viewer.email}</span>
+            {viewer.role && <Badge variant="secondary">{viewer.role}</Badge>}
+            <Button type="button" onClick={handleLogout} variant="secondary" size="sm">
+              Logout
+            </Button>
+          </>
+        )}
+      </div>
+    </nav>
   );
 }

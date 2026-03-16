@@ -2,6 +2,10 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -40,25 +44,42 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="container">
-      <h1>Login</h1>
-      <section className="card auth-card">
-        <form onSubmit={handleSubmit} className="form-grid">
-          <label>
-            Email
-            <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
-          </label>
-          <label>
-            Password
-            <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
-          </label>
-          <button className="btn" disabled={isSubmitting} type="submit">
-            {isSubmitting ? "Logging in..." : "Login"}
-          </button>
-          {error && <p style={{ color: "#b10033", margin: 0 }}>{error}</p>}
-          {success && <p style={{ color: "#1f7a3f", margin: 0 }}>{success}</p>}
-        </form>
-      </section>
+    <div className="mx-auto w-full max-w-6xl px-4 py-10">
+      <Card className="mx-auto w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Login</CardTitle>
+          <CardDescription>Continue to your AdmitConnect account.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+              />
+            </div>
+            <Button className="w-full" disabled={isSubmitting} type="submit">
+              {isSubmitting ? "Logging in..." : "Login"}
+            </Button>
+            {error && <p className="text-sm text-red-700">{error}</p>}
+            {success && <p className="text-sm text-emerald-700">{success}</p>}
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

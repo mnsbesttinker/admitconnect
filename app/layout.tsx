@@ -5,7 +5,7 @@ import "./globals.css";
 import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   title: "AdmitConnect",
@@ -19,10 +19,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={cn("font-sans", inter.variable)}>
-      <body>
-        <header className="container" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Link href="/" style={{ fontWeight: 800 }}>AdmitConnect</Link>
-          <TopNav />
+      <body className="min-h-screen bg-background text-foreground">
+        <header className="border-b">
+          <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
+            <Link href="/" className="text-lg font-extrabold tracking-tight">
+              AdmitConnect
+            </Link>
+            <TopNav />
+          </div>
         </header>
         <main>{children}</main>
       </body>
