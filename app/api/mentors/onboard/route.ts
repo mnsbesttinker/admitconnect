@@ -1,16 +1,6 @@
 import { NextResponse } from "next/server";
 import { submitMentorOnboarding, type MentorOnboardingRequest } from "@/lib/store";
-
-const allowedCredibilityTags = new Set([
-  "full-ride",
-  "need-based",
-  "merit",
-  "t20",
-  "first-gen",
-  "stem",
-  "essay-strategy",
-  "interview-prep"
-]);
+import { isAllowedTutorTag } from "@/lib/tutor-tags";
 
 function splitCsv(input: string) {
   return input
@@ -55,7 +45,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Hourly rate must be between $10 and $300" }, { status: 400 });
   }
 
-  const invalidTag = credibilityTags.find((tag) => !allowedCredibilityTags.has(tag));
+  const invalidTag = credibilityTags.find((tag) => !isAllowedTutorTag(tag));
   if (invalidTag) {
     return NextResponse.json({ error: `Invalid credibility tag: ${invalidTag}` }, { status: 400 });
   }

@@ -9,7 +9,6 @@ This project now uses a **real Prisma + PostgreSQL database path only** for auth
 - No file-backed Prisma mock fallback in `lib/prisma.ts`
 - Tutor discovery and tutor availability endpoints are DB-backed
 - Booking creation reads slot records from PostgreSQL with transactional slot-claim logic
-- The service account integration was abandoned since it's unsuitable for AdmitConnect's booking flow.
 
 ## Stack
 
