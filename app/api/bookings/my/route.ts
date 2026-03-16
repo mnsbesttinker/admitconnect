@@ -8,19 +8,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Auth required" }, { status: 401 });
   }
 
+  const now = new Date();
+
   if (identity.role === "student") {
     const data = await prisma.booking.findMany({
-      where: { studentUserId: identity.id },
+      where: { studentUserId: identity.id, slot: { startTimeUtc: { gte: now } } },
       include: { tutor: true, slot: true },
-      orderBy: { createdAt: "desc" }
+      orderBy: { slot: { startTimeUtc: "asc" } }
     });
     return NextResponse.json({ data });
   }
 
   const data = await prisma.booking.findMany({
-    where: { tutorUserId: identity.id },
+    where: { tutorUserId: identity.id, slot: { startTimeUtc: { gte: now } } },
     include: { student: true, slot: true },
-    orderBy: { createdAt: "desc" }
+    orderBy: { slot: { startTimeUtc: "asc" } }
   });
   return NextResponse.json({ data });
 }
