@@ -24,43 +24,99 @@ Create `.env.local` (or copy from `.env.example`):
 ```bash
 DATABASE_URL="postgresql://admitconnect:admitconnect@localhost:5432/admitconnect?schema=public"
 ADMITCONNECT_SESSION_SECRET="replace-with-a-long-random-secret"
-RESEND_API_KEY="" # optional
-RESEND_FROM_EMAIL="" # optional
+RESEND_API_KEY="" 
+RESEND_FROM_EMAIL="" 
 GOOGLE_CALENDAR_ID=""
 GOOGLE_OAUTH_CLIENT_ID=""
 GOOGLE_OAUTH_CLIENT_SECRET=""
 GOOGLE_OAUTH_REFRESH_TOKEN=""
-GOOGLE_SERVICE_ACCOUNT_EMAIL=""
-GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY=""
 ```
+## CURRENT PRIORITIES 
+
+Further development of my marketplace will be using the following priority order. Optimize for early conversion, trust, and real-world usability for the first 5–10 users, not for overengineering or scale.
+
+Current state:
+- signup/auth works
+- tutor/student onboarding works
+- database works
+- tutors can create availability
+- students can book
+- Google Meet link and calendar invite generation works
+
+Goal:
+Improve the platform in the order that most increases the chance of getting and retaining the first few real users.
+
+Priority Tier 1 — Build now
+1. Landing page trust upgrade
+   - Show real tutors on landing page
+   - Tutor cards with school, major, scholarship tags, SAT tags if relevant
+   - Testimonials section
+   - “How it works” section
+   - Short founder/mission block
+
+2. About page
+   - Explain why peer mentors who actually secured scholarships are different from expensive consultancies
+   - Clarify who the platform is for
+   - Clarify what users should expect
+
+3. Better profile system
+   - Replace current split with:
+     - Profile
+     - My Onboarding
+     - My Availability (tutors)
+     - My Bookings (students)
+     - My Slots / Active Bookings (tutors)
+   - Make student onboarding visible to tutors for booked sessions
+
+4. Tutor verification workflow
+   - Tutors can submit profile and enter pending status
+   - Admin can approve or deny
+   - Only approved tutors are publicly visible/bookable
+   - For now, document submission can remain manual through email, but the platform should support verification status clearly
+
+5. Email verification enforcement
+   - Require verified email before full account usage
+
+Priority Tier 2 — Build after first sessions
+6. Review system
+   - Students can rate tutors after sessions
+   - Tutor profile shows rating and reviews
+
+7. Search/filter system
+   - Filter tutors by tags like:
+     - merit scholarship
+     - need-based scholarship
+     - athlete
+     - 1550+ SAT
+     - hourly rate
+
+8. Payment system
+   - Student pays through platform
+   - Platform commission tracked
+   - Tutor payout flow prepared
+
+Priority Tier 3 — Later / polish
+9. shadcn/ui migration for major UI surfaces
+10. Admin dashboard
+11. Security hardening / UX polish
+
+Priority Tier 4 — Do not build now
+12. AI matching algorithm
+
+Implementation principles:
+- Every feature should increase trust or conversion for the first users
+- Prefer simple, clean, working solutions over overengineering
+- Keep current booking and session flow intact
+- If a feature can be done manually for now, don’t over-automate it
+- Focus especially on landing page, tutor profiles, verification state, and usability
 
 
 ## Google Meet links for bookings
 
 Bookings create a Google Meet space (Meet API) with `OPEN` access and include the returned Meet URL in both student/tutor confirmation emails.
 
-Choose one auth mode:
-
-1. **OAuth refresh token (recommended):**
-   - Set `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REFRESH_TOKEN`.
-   - Use a Google account that owns (or can edit) the target calendar.
-2. **Service account (advanced):**
-   - Set `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`.
-   - Share the target Google Calendar with the service-account email (Editor access).
-   - Service-account mode creates the event + Meet link **without Calendar attendees** to avoid Google's `forbiddenForServiceAccounts` restriction. Student/tutor receive the Meet URL through Resend confirmation emails.
-
-Set `GOOGLE_CALENDAR_ID` if you also want a companion Calendar event created with the Meet URL in its description/location. Calendar event creation is optional and booking continues even if event creation fails.
-
 If Meet generation fails, booking creation now returns an error payload with a `detail` field and releases the slot so the student can retry after configuration is fixed.
 
-
-## Run a local PostgreSQL database
-
-```bash
-npm run db:up
-```
-
-This starts Postgres via `docker-compose.yml` on `localhost:5432`.
 
 ## Initialize database schema
 
@@ -81,10 +137,6 @@ npm run prisma:migrate:deploy
 ```bash
 npm run dev
 ```
-
-Open `http://localhost:3000`.
-
-
 ## View and manage database data
 
 ### Option A: Prisma Studio (easiest UI)
@@ -158,22 +210,6 @@ This drops and recreates the schema from migrations (destructive).
 
 ## Troubleshooting
 
-- **`npm error Missing script: "prisma:studio"`**
-  - Your local checkout is likely behind the latest `package.json`.
-  - Run:
-
-```bash
-git pull
-npm install
-npm run
-```
-
-  - Then use either `npm run prisma:studio` or alias `npm run db:studio`.
-
-- **Prisma commands fail with `prisma: command not found`**
-  - Run `npm install` first so local binaries are available in `node_modules/.bin`.
-
-
 ## Production DB quick-check
 
 After setting `DATABASE_URL` on Vercel production and redeploying, open:
@@ -189,76 +225,7 @@ Expected response:
 If `ok` is false, the `error` field will tell you whether it is auth/network/migration related.
 
 
-- **PrismaClientInitializationError on Vercel about outdated Prisma Client**
-  - This repo now runs `prisma generate` automatically in both `postinstall` and `build`.
-  - If your deployment was created before this fix, trigger a fresh redeploy so dependencies rebuild and Prisma Client regenerates.
 
-## Vercel domain + Resend setup (step-by-step)
-
-If you already bought a domain in Vercel, you can use that same domain for transactional email (signup + booking confirmations).
-
-### 1) Create your Resend account/dashboard access
-
-1. Go to [https://resend.com](https://resend.com) and sign in (GitHub/Google/email is fine).
-2. After login, you are in the **Resend Dashboard**.
-3. In the left sidebar, open **Domains**.
-
-> You do not access Resend from the Vercel dashboard directly; they are separate dashboards.
-
-### 2) Add your Vercel-managed domain in Resend
-
-1. In Resend **Domains**, click **Add domain**.
-2. Enter your root domain (for example: `yourdomain.com`, not `www.yourdomain.com`).
-3. Resend will show the DNS records required for verification (usually SPF + DKIM records).
-
-Keep this page open because you will copy those records into Vercel DNS next.
-
-### 3) Add Resend DNS records in Vercel
-
-1. Open [https://vercel.com/dashboard](https://vercel.com/dashboard).
-2. Go to your project (or Team) → **Domains**.
-3. Click your domain → **DNS Records**.
-4. Add every record exactly as Resend shows it:
-   - `TXT` for SPF
-   - `CNAME` records for DKIM
-   - Any additional `TXT`/`MX` that Resend requests
-5. Save each record.
-
-### 4) Verify the domain in Resend
-
-1. Return to Resend **Domains**.
-2. Click **Verify DNS Records** (or wait for auto-check).
-3. Once verified, create/use a sender like `hello@yourdomain.com`.
-
-If verification is pending, wait a few minutes and retry.
-
-### 5) Add email env vars in Vercel
-
-In Vercel project settings, add:
-
-- `RESEND_API_KEY` = your Resend API key (Resend Dashboard → API Keys)
-- `RESEND_FROM_EMAIL` = verified sender (example: `hello@yourdomain.com`)
-
-Set these at least for the **Production** environment, then redeploy.
-
-### 6) Confirm your app is using real delivery
-
-This app sends real email only when both `RESEND_API_KEY` and `RESEND_FROM_EMAIL` exist.
-If missing, it falls back to stubbed console logging.
-
-Quick production check:
-
-1. Redeploy after adding env vars.
-2. Trigger a flow that sends email (signup confirmation or booking confirmation).
-3. In Resend Dashboard, open **Logs** and confirm delivery events.
-
-### 7) End-to-end smoke test
-
-1. Open your production site.
-2. Create a fresh user via signup.
-3. Confirm signup email appears in the recipient inbox.
-4. Book a session and confirm booking email appears.
-5. Check Resend logs for both events.
 
 ### Common gotchas
 
