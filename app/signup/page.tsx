@@ -1,0 +1,109 @@
+"use client";
+
+import { FormEvent, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { SUPPORTED_TIMEZONES } from "@/lib/timezones";
+
+const roles = ["student", "tutor"] as const;
+type Role = (typeof roles)[number];
+
+
+async function postJsonWithTimeout(url: string, body: unknown, timeoutMs = 12000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      credentials: "include",
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+      signal: controller.signal
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export default function SignupPage() {
+  const router = useRouter();
+  const timezoneGuess = useMemo(() => {
+    const detected = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+    return SUPPORTED_TIMEZONES.includes(detected as (typeof SUPPORTED_TIMEZONES)[number]) ? detected : "America/Anchorage";
+  }, []);
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState<Role>("student");
+  const [timezone, setTimezone] = useState(timezoneGuess);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+
+    let signupRes: Response;
+    try {
+      signupRes = await postJsonWithTimeout("/api/auth/signup", { name, email, password, role, timezone });
+    } catch {
+      setError("Signup request timed out. Check your database deployment/config and try again.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!signupRes.ok) {
+      const payload = (await signupRes.json()) as { error?: string };
+      setError(payload.error || "Sign-up failed");
+      setIsSubmitting(false);
+      return;
+    }
+
+    let loginRes: Response;
+    try {
+      loginRes = await postJsonWithTimeout("/api/auth/login", { email, password });
+    } catch {
+      setError("Auto-login request timed out. Please try logging in manually.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    setIsSubmitting(false);
+
+    if (!loginRes.ok) {
+      setError("Account created but auto-login failed. Please login manually.");
+      router.push("/login");
+      return;
+    }
+
+    router.refresh();
+    router.push(role === "tutor" ? "/tutor/onboarding" : "/student/onboarding");
+  }
+
+  return (
+    <div className="container">
+      <h1>Create an account</h1>
+      <section className="card auth-card">
+        <form onSubmit={handleSubmit} className="form-grid">
+          <label>Full name<input value={name} onChange={(event) => setName(event.target.value)} required /></label>
+          <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
+          <label>Password<input type="password" minLength={6} value={password} onChange={(event) => setPassword(event.target.value)} required /></label>
+          <label>Role
+            <select value={role} onChange={(event) => setRole(event.target.value as Role)}>
+              {roles.map((entry) => <option key={entry} value={entry}>{entry}</option>)}
+            </select>
+          </label>
+          <label>Timezone
+            <select value={timezone} onChange={(event) => setTimezone(event.target.value)} required>
+              {SUPPORTED_TIMEZONES.map((entry) => <option key={entry} value={entry}>{entry}</option>)}
+            </select>
+          </label>
+          <button className="btn" disabled={isSubmitting} type="submit">{isSubmitting ? "Creating..." : "Sign up"}</button>
+          {error && <p style={{ color: "#b10033", margin: 0 }}>{error}</p>}
+        </form>
+      </section>
+    </div>
+  );
+}
