@@ -20,38 +20,38 @@ const trustPoints = [
 
 export default function HomePage() {
   return (
-    <div className="mx-auto grid w-full max-w-6xl gap-5 px-4 py-10">
+    <div className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-10 md:gap-8">
       <Card className="py-0">
-        <CardContent className="grid gap-4 p-8">
+        <CardContent className="grid gap-5 p-8 md:p-10">
           <Badge variant="secondary" className="w-fit">
             Built for international applicants
           </Badge>
           <div className="grid gap-3">
-            <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
+            <h1 className="text-3xl font-extrabold tracking-tight md:text-5xl">
               Affordable 1-on-1 mentorship from U.S. scholarship admits
             </h1>
-            <p className="text-muted-foreground max-w-3xl text-base md:text-lg">
+            <p className="text-muted-foreground max-w-3xl text-base leading-7 md:text-lg">
               AdmitConnect is built specifically for international applicants optimizing for aid. We focus where most general
               admissions platforms do not: affordability strategy, aid positioning, and realistic planning for cost-sensitive
               families.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button asChild>
+            <Button asChild className="bg-blue-600 text-white hover:bg-blue-700">
               <Link href="/mentors">Find a mentor</Link>
             </Button>
-            <Button asChild variant="secondary">
+            <Button asChild variant="outline" className="font-semibold">
               <Link href="/tutor/apply">Become a tutor</Link>
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid items-stretch gap-4 md:grid-cols-3">
         {trustPoints.map((point) => (
-          <Card key={point.title}>
+          <Card key={point.title} className="h-full">
             <CardHeader>
-              <CardTitle className="text-lg">{point.title}</CardTitle>
+              <CardTitle className="text-lg font-semibold">{point.title}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground text-sm leading-6">{point.body}</p>
