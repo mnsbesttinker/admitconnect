@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 type Submission = {
   id: string;
@@ -80,50 +82,63 @@ export default function AdminVerificationPage() {
         <CardHeader>
           <CardTitle>Admin Tutor Verification</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-2">
-          <p className="text-muted-foreground text-sm">Review pending tutor applications and approve or reject.</p>
-          <p className="text-sm">
-            <span className="font-semibold">Status:</span> {status}
-          </p>
+        <CardContent>
+          <Alert>
+            <AlertTitle>Review queue</AlertTitle>
+            <AlertDescription>{status}</AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
 
-      <div className="grid gap-4">
-        {submissions.map((submission) => (
-          <Card key={submission.id} className="bg-white">
-            <CardHeader>
-              <CardTitle>{submission.name}</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-3">
-              <p className="text-muted-foreground text-sm">
-                {submission.university} · ${submission.hourlyRateUsd}/hr
-              </p>
-              <p className="text-sm">{submission.offeringSummary}</p>
+      <Card className="bg-white">
+        <CardHeader>
+          <CardTitle>Pending submissions ({submissions.length})</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          {submissions.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No pending tutor applications.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>University</TableHead>
+                  <TableHead>Rate</TableHead>
+                  <TableHead>Profile photo</TableHead>
+                  <TableHead>Credential docs</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {submissions.map((submission) => (
+                  <TableRow key={submission.id}>
+                    <TableCell className="font-medium">{submission.name}</TableCell>
+                    <TableCell>{submission.university}</TableCell>
+                    <TableCell>${submission.hourlyRateUsd}/hr</TableCell>
+                    <TableCell>{submission.profilePhotoFileName}</TableCell>
+                    <TableCell>{submission.credentialDocuments.length}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button type="button" onClick={() => decide(submission.id, "approve")}>Approve</Button>
+                        <Button type="button" variant="secondary" onClick={() => decide(submission.id, "reject")}>Reject</Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
 
-              <div className="grid gap-1 text-sm">
-                <p className="font-semibold">Profile photo</p>
-                <p className="text-muted-foreground">{submission.profilePhotoFileName}</p>
-              </div>
-
-              <div className="grid gap-1 text-sm">
-                <p className="font-semibold">Credential documents</p>
-                <ul className="list-inside list-disc text-muted-foreground">
-                  {submission.credentialDocuments.map((documentUrl) => (
-                    <li key={documentUrl}>{documentUrl}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" onClick={() => decide(submission.id, "approve")}>Approve</Button>
-                <Button type="button" variant="secondary" onClick={() => decide(submission.id, "reject")}>Reject</Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        {submissions.length === 0 && <Card className="bg-white"><CardContent className="py-6 text-sm">No pending tutor applications.</CardContent></Card>}
-      </div>
+          {submissions.map((submission) => (
+            <Card key={`summary-${submission.id}`} className="py-4">
+              <CardContent className="grid gap-2 px-4">
+                <p className="text-sm font-medium">{submission.name}</p>
+                <p className="text-muted-foreground text-sm">{submission.offeringSummary}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </CardContent>
+      </Card>
     </div>
   );
 }

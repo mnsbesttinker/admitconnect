@@ -277,8 +277,8 @@ This branch is dedicated to migrating the UI to Tailwind + shadcn/ui without cha
 - Phase 1 — Auth + Global Shell: **80%** (4/5 checklist items complete).
 - Phase 2 — Marketplace trust surfaces: **75%** (3/4 checklist items complete).
 - Phase 3 — Onboarding and dashboard forms: **100%** (6/6 checklist items complete).
-- Phase 4 — Booking + admin operations: **75%** (3/4 checklist items complete).
-- Phase 5 — Static/legal cleanup: **0%** (0/6 checklist items complete).
+- Phase 4 — Booking + admin operations: **100%** (4/4 checklist items complete).
+- Phase 5 — Static/legal cleanup: **100%** (6/6 checklist items complete).
 - Phase 6 — Legacy CSS retirement: **0%** (0/3 checklist items complete).
 
 ### Readability QA tracker (current sprint)
@@ -314,15 +314,15 @@ This branch is dedicated to migrating the UI to Tailwind + shadcn/ui without cha
 - [x] `components/booking-flow.tsx`
 - [x] `app/book/page.tsx`
 - [x] `app/admin/verification/page.tsx`
-- [ ] Add `table`, `alert`, `skeleton`, `dialog` components when needed.
+- [x] Add `table`, `alert`, `skeleton`, `dialog` components when needed.
 
 #### Phase 5 — Static/legal cleanup
-- [ ] `app/faq/page.tsx`
-- [ ] `app/privacy/page.tsx`
-- [ ] `app/terms/page.tsx`
-- [ ] `app/refund-policy/page.tsx`
-- [ ] `app/trust-safety/page.tsx`
-- [ ] `app/pricing/page.tsx`
+- [x] `app/faq/page.tsx`
+- [x] `app/privacy/page.tsx`
+- [x] `app/terms/page.tsx`
+- [x] `app/refund-policy/page.tsx`
+- [x] `app/trust-safety/page.tsx`
+- [x] `app/pricing/page.tsx`
 
 #### Phase 6 — Legacy CSS retirement
 - [ ] Remove unused `.container`, `.card`, `.btn`, `.badge`, `.muted`, `.form-grid`, `.nav-*` rules from `app/globals.css`.
