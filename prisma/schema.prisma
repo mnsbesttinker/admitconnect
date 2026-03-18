@@ -43,6 +43,7 @@ model TutorProfile {
   major       String
   bio         String
   specialties String
+  profileImageUrl String?
   hourlyRate  Int
   isVerified  Boolean  @default(false)
 

@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import LandingTutorSpotlight from "@/components/landing-tutor-spotlight";
 
 const valueProps = [
   {
@@ -16,37 +17,6 @@ const valueProps = [
   {
     title: "Affordable sessions, not $20k packages",
     body: "Book focused support when you need it, without long consulting contracts or bloated overhead."
-  }
-];
-
-const mentorHighlights = [
-  {
-    name: "Aarav Patel",
-    school: "Duke University",
-    major: "Computer Science",
-    outcome: "Full Ride",
-    tags: ["1580 SAT", "Need-Based Aid"]
-  },
-  {
-    name: "Maya Johnson",
-    school: "Yale University",
-    major: "Economics",
-    outcome: "Yale Admit",
-    tags: ["QuestBridge", "Essay Strategy"]
-  },
-  {
-    name: "Daniel Kim",
-    school: "MIT",
-    major: "Mechanical Engineering",
-    outcome: "Scholarship Winner",
-    tags: ["Research", "STEM Essays"]
-  },
-  {
-    name: "Lucia Fernandez",
-    school: "Stanford University",
-    major: "Human Biology",
-    outcome: "Need-Based Aid",
-    tags: ["Athlete", "Intl Applicant"]
   }
 ];
 
@@ -119,7 +89,7 @@ export default function HomePage() {
         <div className="relative overflow-hidden rounded-2xl border bg-slate-100">
           <div className="relative min-h-72 sm:min-h-80">
             <Image
-              src="/images/landing-hero.jpg"
+              src="/landing-hero.jpg"
               alt="Ambitious students reviewing college applications with a mentor"
               fill
               priority
@@ -143,26 +113,7 @@ export default function HomePage() {
             Serious profiles, practical support, and clear proof that these mentors understand both admissions and affordability.
           </p>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {mentorHighlights.map((mentor) => (
-            <Card key={mentor.name} className="h-full bg-white">
-              <CardHeader className="space-y-2">
-                <CardTitle className="text-xl font-bold">{mentor.name}</CardTitle>
-                <p className="text-muted-foreground text-sm">
-                  {mentor.school} · {mentor.major}
-                </p>
-                <Badge className="w-fit bg-slate-900 text-white hover:bg-slate-900">{mentor.outcome}</Badge>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2">
-                {mentor.tags.map((tag) => (
-                  <Badge key={tag} variant="outline">
-                    {tag}
-                  </Badge>
-                ))}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <LandingTutorSpotlight />
       </section>
 
       <section className="space-y-4">
