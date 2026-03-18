@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { mentors, sessionTypes } from "@/lib/mentors";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 
 type BookingResponse = {
   id: string;
@@ -29,6 +32,9 @@ type AvailabilitySlot = {
 };
 
 type Viewer = { name: string | null; email?: string | null; role: "student" | "tutor" | "admin" | null } | null;
+
+const selectClassName =
+  "border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring h-9 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50";
 
 function formatSlot(start: string, end: string) {
   return `${new Date(start).toLocaleString()} → ${new Date(end).toLocaleTimeString()}`;
@@ -197,92 +203,121 @@ export default function BookingFlow() {
   }
 
   return (
-    <section className="card" style={{ padding: "1.25rem" }}>
-      <h2 style={{ marginTop: 0 }}>MVP Booking + Payment Flow Tester</h2>
-      <p className="muted">A signed-in student can book a mentor slot. Payments remain mocked for now.</p>
+    <Card className="bg-white">
+      <CardHeader>
+        <CardTitle>MVP Booking + Payment Flow Tester</CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-5">
+        <p className="text-muted-foreground text-sm">A signed-in student can book a mentor slot. Payments remain mocked for now.</p>
 
-      <div style={{ display: "grid", gap: "0.75rem" }}>
-        <label>
-          Signed in as
-          <input value={viewer ? `${viewer.name || "Unknown"} (${viewer.email || "no-email"})` : "Guest"} style={{ width: "100%" }} disabled readOnly />
-        </label>
-
-        <label>
-          Mentor
-          <select value={mentorId} onChange={(event) => setMentorId(event.target.value)} style={{ width: "100%" }}>
-            {mentors.map((mentor) => (
-              <option key={mentor.id} value={mentor.id}>
-                {mentor.name} — {mentor.university}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          Session type
-          <select
-            value={sessionTypeId}
-            onChange={(event) => {
-              setSessionTypeId(event.target.value);
-              setBooking(null);
-              setPaymentIntent(null);
-            }}
-            style={{ width: "100%" }}
-          >
-            {sessionTypes.map((session) => (
-              <option key={session.id} value={session.id}>
-                {session.name} (${session.priceUsd})
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          Available slot
-          <select
-            value={slot}
-            onChange={(event) => {
-              setSlot(event.target.value);
-              setBooking(null);
-              setPaymentIntent(null);
-            }}
-            style={{ width: "100%" }}
-          >
-            {availableSlots.length === 0 && <option value="">No available slots</option>}
-            {availableSlots.map((entry) => (
-              <option key={entry.id} value={entry.startTimeUtc}>
-                {formatSlot(entry.startTimeUtc, entry.endTimeUtc)}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem", flexWrap: "wrap" }}>
-        <button type="button" className="btn" onClick={createBooking} disabled={!slot || !canBook}>1) Create booking</button>
-        <button type="button" className="btn" onClick={createPaymentIntent} disabled={!booking}>2) Create payment intent</button>
-        <button type="button" className="btn" onClick={confirmPaymentWebhook} disabled={!paymentIntent}>3) Confirm payment webhook</button>
-      </div>
-
-      <p style={{ marginTop: "1rem" }}><strong>Status:</strong> {message || "Ready"}</p>
-
-      <div className="muted">
-        <p style={{ marginBottom: "0.3rem" }}><strong>Mentor:</strong> {selectedMentor?.name}</p>
-        <p style={{ marginBottom: "0.3rem" }}><strong>Booking:</strong> {booking ? `${booking.id} (${booking.status})` : "none"}</p>
-        <p style={{ margin: 0 }}><strong>Payment intent:</strong> {paymentIntent ? paymentIntent.providerPaymentIntentId : "none"}</p>
-      </div>
-
-      <section style={{ marginTop: "1rem" }}>
-        <h3 style={{ marginBottom: "0.5rem" }}>My bookings</h3>
-        {myBookings.length === 0 && <p className="muted">No bookings yet.</p>}
-        {myBookings.map((entry) => (
-          <div key={entry.id} className="card" style={{ marginBottom: "0.5rem" }}>
-            <p style={{ margin: 0 }}>
-              <strong>{entry.applicantName}</strong> booked <strong>{entry.mentorId}</strong> at {new Date(entry.startTimeUtc).toLocaleString()} ({entry.status})
-            </p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-2 md:col-span-2">
+            <Label htmlFor="viewer">Signed in as</Label>
+            <input
+              id="viewer"
+              value={viewer ? `${viewer.name || "Unknown"} (${viewer.email || "no-email"})` : "Guest"}
+              className={selectClassName}
+              disabled
+              readOnly
+            />
           </div>
-        ))}
-      </section>
-    </section>
+
+          <div className="grid gap-2">
+            <Label htmlFor="mentor">Mentor</Label>
+            <select id="mentor" value={mentorId} onChange={(event) => setMentorId(event.target.value)} className={selectClassName}>
+              {mentors.map((mentor) => (
+                <option key={mentor.id} value={mentor.id}>
+                  {mentor.name} — {mentor.university}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="sessionType">Session type</Label>
+            <select
+              id="sessionType"
+              value={sessionTypeId}
+              onChange={(event) => {
+                setSessionTypeId(event.target.value);
+                setBooking(null);
+                setPaymentIntent(null);
+              }}
+              className={selectClassName}
+            >
+              {sessionTypes.map((session) => (
+                <option key={session.id} value={session.id}>
+                  {session.name} (${session.priceUsd})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid gap-2 md:col-span-2">
+            <Label htmlFor="slot">Available slot</Label>
+            <select
+              id="slot"
+              value={slot}
+              onChange={(event) => {
+                setSlot(event.target.value);
+                setBooking(null);
+                setPaymentIntent(null);
+              }}
+              className={selectClassName}
+            >
+              {availableSlots.length === 0 && <option value="">No available slots</option>}
+              {availableSlots.map((entry) => (
+                <option key={entry.id} value={entry.startTimeUtc}>
+                  {formatSlot(entry.startTimeUtc, entry.endTimeUtc)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" onClick={createBooking} disabled={!slot || !canBook}>
+            1) Create booking
+          </Button>
+          <Button type="button" onClick={createPaymentIntent} disabled={!booking} variant="secondary">
+            2) Create payment intent
+          </Button>
+          <Button type="button" onClick={confirmPaymentWebhook} disabled={!paymentIntent} variant="outline">
+            3) Confirm payment webhook
+          </Button>
+        </div>
+
+        <p className="text-sm">
+          <span className="font-semibold">Status:</span> {message || "Ready"}
+        </p>
+
+        <div className="text-muted-foreground grid gap-1 text-sm">
+          <p>
+            <span className="font-semibold">Mentor:</span> {selectedMentor?.name}
+          </p>
+          <p>
+            <span className="font-semibold">Booking:</span> {booking ? `${booking.id} (${booking.status})` : "none"}
+          </p>
+          <p>
+            <span className="font-semibold">Payment intent:</span> {paymentIntent ? paymentIntent.providerPaymentIntentId : "none"}
+          </p>
+        </div>
+
+        <section className="grid gap-3 rounded-lg border bg-muted/20 p-4">
+          <h3 className="text-lg font-semibold">My bookings</h3>
+          {myBookings.length === 0 && <p className="text-muted-foreground text-sm">No bookings yet.</p>}
+          {myBookings.map((entry) => (
+            <Card key={entry.id} className="py-4">
+              <CardContent className="px-4">
+                <p className="text-sm">
+                  <strong>{entry.applicantName}</strong> booked <strong>{entry.mentorId}</strong> at{" "}
+                  {new Date(entry.startTimeUtc).toLocaleString()} ({entry.status})
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </section>
+      </CardContent>
+    </Card>
   );
 }

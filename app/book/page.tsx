@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import BookingFlow from "@/components/booking-flow";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Booking = {
   id: string;
@@ -41,20 +44,37 @@ export default function BookPage() {
   const zone = viewer?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 
   return (
-    <div className="container">
-      <h1>Book a Session</h1>
-      <p>Browse tutors and book an available slot from their profile.</p>
-      <Link className="btn" href="/mentors">Browse tutors</Link>
+    <div className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-10">
+      <Card className="bg-white">
+        <CardHeader>
+          <CardTitle>Book a Session</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <p className="text-sm">Browse tutors and book an available slot from their profile.</p>
+          <div>
+            <Button asChild>
+              <Link href="/mentors">Browse tutors</Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-      <section className="card" style={{ marginTop: "1rem" }}>
-        <h3 style={{ marginTop: 0 }}>My bookings</h3>
-        {bookings.length === 0 && <p className="muted">No bookings yet.</p>}
-        {bookings.map((booking) => (
-          <p key={booking.id}>
-            {booking.tutor?.fullName || booking.student?.fullName} · {new Date(booking.slot.startTimeUtc).toLocaleString([], { timeZone: zone })} · {booking.status}
-          </p>
-        ))}
-      </section>
+      <Card className="bg-white">
+        <CardHeader>
+          <CardTitle>My bookings</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-2">
+          {bookings.length === 0 && <p className="text-muted-foreground text-sm">No bookings yet.</p>}
+          {bookings.map((booking) => (
+            <p key={booking.id} className="text-sm">
+              {booking.tutor?.fullName || booking.student?.fullName} ·{" "}
+              {new Date(booking.slot.startTimeUtc).toLocaleString([], { timeZone: zone })} · {booking.status}
+            </p>
+          ))}
+        </CardContent>
+      </Card>
+
+      <BookingFlow />
     </div>
   );
 }

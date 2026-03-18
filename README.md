@@ -277,7 +277,7 @@ This branch is dedicated to migrating the UI to Tailwind + shadcn/ui without cha
 - Phase 1 — Auth + Global Shell: **80%** (4/5 checklist items complete).
 - Phase 2 — Marketplace trust surfaces: **75%** (3/4 checklist items complete).
 - Phase 3 — Onboarding and dashboard forms: **100%** (6/6 checklist items complete).
-- Phase 4 — Booking + admin operations: **0%** (0/4 checklist items complete).
+- Phase 4 — Booking + admin operations: **75%** (3/4 checklist items complete).
 - Phase 5 — Static/legal cleanup: **0%** (0/6 checklist items complete).
 - Phase 6 — Legacy CSS retirement: **0%** (0/3 checklist items complete).
 
@@ -311,9 +311,9 @@ This branch is dedicated to migrating the UI to Tailwind + shadcn/ui without cha
 - [x] `app/messages/tutor/page.tsx`
 
 #### Phase 4 — Booking + admin operations
-- [ ] `components/booking-flow.tsx`
-- [ ] `app/book/page.tsx`
-- [ ] `app/admin/verification/page.tsx`
+- [x] `components/booking-flow.tsx`
+- [x] `app/book/page.tsx`
+- [x] `app/admin/verification/page.tsx`
 - [ ] Add `table`, `alert`, `skeleton`, `dialog` components when needed.
 
 #### Phase 5 — Static/legal cleanup
