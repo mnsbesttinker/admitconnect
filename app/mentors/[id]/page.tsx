@@ -111,7 +111,7 @@ export default function MentorProfilePage({ params }: { params: { id: string } }
   if (isLoading) {
     return (
       <div className="mx-auto w-full max-w-6xl px-4 py-10">
-        <p className="text-muted-foreground">Loading tutor...</p>
+        <p className="text-muted-foreground text-base">Loading tutor...</p>
       </div>
     );
   }
@@ -122,7 +122,7 @@ export default function MentorProfilePage({ params }: { params: { id: string } }
         <Link href="/mentors" className="text-muted-foreground text-sm hover:underline">
           ← Back to tutors
         </Link>
-        <Card className="mt-4">
+        <Card className="mt-4 bg-white">
           <CardHeader>
             <CardTitle>Tutor unavailable</CardTitle>
           </CardHeader>
@@ -140,36 +140,48 @@ export default function MentorProfilePage({ params }: { params: { id: string } }
         ← Back to tutors
       </Link>
 
-      <Card className="mt-4">
-        <CardHeader className="grid gap-3">
-          <CardTitle className="text-3xl">{tutor.fullName}</CardTitle>
-          <p className="text-muted-foreground text-sm">
+      <Card className="mt-5 bg-white">
+        <CardHeader className="grid gap-5 border-b pb-6">
+          <CardTitle className="text-4xl font-black tracking-tight">{tutor.fullName}</CardTitle>
+          <p className="text-muted-foreground text-lg leading-8">
             {tutor.school} · {tutor.major}
           </p>
           <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary">${tutor.hourlyRate}/hr</Badge>
-            <Badge variant="outline">{zone}</Badge>
+            <Badge variant="secondary" className="font-semibold">
+              ${tutor.hourlyRate}/hr
+            </Badge>
+            <Badge variant="outline" className="font-semibold">
+              {zone}
+            </Badge>
           </div>
         </CardHeader>
-        <CardContent className="grid gap-6">
-          <p className="text-sm leading-6">{tutor.bio}</p>
-          <p className="text-sm">
-            <span className="font-semibold">Specialties:</span> {tutor.specialties}
-          </p>
 
-          <div className="grid gap-3">
-            <h3 className="text-lg font-semibold">Available slots ({zone})</h3>
+        <CardContent className="grid gap-7 pt-6 lg:grid-cols-[1.2fr_1fr]">
+          <section className="grid gap-4">
+            <h3 className="text-xl font-bold">About this tutor</h3>
+            <p className="text-base leading-8">{tutor.bio}</p>
+            <p className="text-base leading-8">
+              <span className="font-semibold">Specialties:</span> {tutor.specialties}
+            </p>
+          </section>
+
+          <section className="grid gap-4 rounded-lg border bg-muted/20 p-4">
+            <h3 className="text-xl font-bold">Available slots ({zone})</h3>
             {tutor.slots.length === 0 && <p className="text-muted-foreground text-sm">No slots available right now.</p>}
             <div className="grid gap-3">
               {tutor.slots.map((slot) => (
-                <Card key={slot.id} className="py-4">
+                <Card key={slot.id} className="bg-background py-4">
                   <CardContent className="grid gap-3 px-4">
-                    <p className="text-sm">
+                    <p className="text-sm leading-6">
                       {new Date(slot.startTimeUtc).toLocaleString([], { timeZone: zone })} →{" "}
                       {new Date(slot.endTimeUtc).toLocaleTimeString([], { timeZone: zone })}
                     </p>
                     <div className="flex flex-wrap items-center gap-3">
-                      <Button disabled={viewer?.role !== "student"} onClick={() => bookSlot(slot.id)}>
+                      <Button
+                        disabled={viewer?.role !== "student"}
+                        onClick={() => bookSlot(slot.id)}
+                        className="bg-blue-600 font-semibold text-white hover:bg-blue-700"
+                      >
                         Book this slot
                       </Button>
                       {viewer?.role !== "student" && (
@@ -180,13 +192,13 @@ export default function MentorProfilePage({ params }: { params: { id: string } }
                 </Card>
               ))}
             </div>
-          </div>
-
-          <p className="text-sm">
-            <span className="font-semibold">Status:</span> {status}
-          </p>
+          </section>
         </CardContent>
       </Card>
+
+      <p className="mt-4 text-sm">
+        <span className="font-semibold">Status:</span> {status}
+      </p>
     </div>
   );
 }

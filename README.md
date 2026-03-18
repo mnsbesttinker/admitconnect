@@ -276,10 +276,16 @@ This branch is dedicated to migrating the UI to Tailwind + shadcn/ui without cha
 ### Phase progress snapshot
 - Phase 1 — Auth + Global Shell: **80%** (4/5 checklist items complete).
 - Phase 2 — Marketplace trust surfaces: **75%** (3/4 checklist items complete).
-- Phase 3 — Onboarding and dashboard forms: **17%** (1/6 checklist items complete).
+- Phase 3 — Onboarding and dashboard forms: **33%** (2/6 checklist items complete).
 - Phase 4 — Booking + admin operations: **0%** (0/4 checklist items complete).
 - Phase 5 — Static/legal cleanup: **0%** (0/6 checklist items complete).
 - Phase 6 — Legacy CSS retirement: **0%** (0/3 checklist items complete).
+
+### Readability QA tracker (current sprint)
+- [x] Landing page readability pass: stronger hierarchy, larger title/body line-height, and high-contrast primary CTA.
+- [x] Tutor directory readability pass: larger heading typography, clearer metadata spacing, stronger price/CTA contrast.
+- [x] Mentor profile readability pass: split "About" vs "Available slots" into clearly separated sections with better spacing.
+- [x] Student onboarding readability pass: clearer two-column structure on desktop and stronger status/action legibility.
 
 ### Phased migration checklist (continue from here)
 
@@ -297,7 +303,7 @@ This branch is dedicated to migrating the UI to Tailwind + shadcn/ui without cha
 - [ ] Introduce consistent card grid spacing tokens.
 
 #### Phase 3 — Onboarding and dashboard forms
-- [ ] `app/tutor/onboarding/page.tsx`
+- [x] `app/tutor/onboarding/page.tsx`
 - [ ] `app/tutor/apply/page.tsx`
 - [x] `app/student/onboarding/page.tsx`
 - [ ] `app/tutor/availability/page.tsx`
