@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -100,11 +101,10 @@ export default function HomePage() {
           </Badge>
           <div className="space-y-4">
             <h1 className="text-4xl font-black leading-tight tracking-tight md:text-5xl">
-              Affordable guidance from students who actually won scholarships
+              You don’t need to pay $20k for college consulting
             </h1>
             <p className="text-muted-foreground max-w-xl text-base leading-8 md:text-lg">
-              Build stronger essays, smarter school lists, and clearer aid strategy with mentors who recently navigated the
-              same process.
+              Get affordable guidance from students who actually won scholarships and figured the process out themselves
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -116,15 +116,22 @@ export default function HomePage() {
             </Button>
           </div>
         </div>
-        <div className="rounded-xl border bg-gradient-to-br from-slate-50 to-blue-50 p-5">
-          <div className="relative grid min-h-72 place-items-center rounded-lg border border-dashed bg-white/80 p-6 text-center">
-            <div className="space-y-3">
-              <p className="text-sm font-semibold tracking-wide text-slate-600 uppercase">Hero visual placeholder</p>
-              <p className="text-muted-foreground text-sm leading-6">
-                Replace with aspirational student mentorship imagery (diverse top-college students, campus, counseling moment).
-              </p>
-              <Badge variant="outline">Dream school planning • Scholarship outcomes • Human mentorship</Badge>
-            </div>
+        <div className="relative overflow-hidden rounded-2xl border bg-slate-100">
+          <div className="relative min-h-72 sm:min-h-80">
+            <Image
+              src="/images/landing-hero.jpg"
+              alt="Ambitious students reviewing college applications with a mentor"
+              fill
+              priority
+              className="object-cover"
+              sizes="(min-width: 1024px) 45vw, 100vw"
+            />
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/55 via-slate-900/10 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+            <Badge className="bg-white/95 text-slate-900 hover:bg-white">
+              Dream school planning • Scholarship outcomes • Human mentorship
+            </Badge>
           </div>
         </div>
       </section>
