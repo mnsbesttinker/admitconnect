@@ -1,8 +1,9 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -29,16 +30,16 @@ export default function StudentOnboardingPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10">
-      <Card className="mx-auto max-w-4xl bg-white">
-        <CardHeader className="grid gap-3 md:grid-cols-2 md:items-start md:gap-6">
-          <CardTitle className="text-3xl font-black tracking-tight">Student onboarding</CardTitle>
-          <CardDescription className="text-base leading-7">
+    <div className="mx-auto w-full max-w-3xl px-4 py-10">
+      <Card className="mx-auto max-w-2xl bg-white">
+        <CardHeader className="space-y-2">
+          <CardTitle className="text-2xl font-black tracking-tight sm:text-3xl">Student onboarding</CardTitle>
+          <CardDescription className="text-sm leading-6 sm:text-base">
             Share your academic context so tutors can personalize support.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
+        <CardContent className="space-y-5">
+          <form id="student-onboarding-form" className="grid gap-4 lg:grid-cols-2" onSubmit={handleSubmit}>
             <div className="grid gap-2">
               <Label htmlFor="country">Country</Label>
               <Input id="country" name="country" placeholder="Country" required />
@@ -58,18 +59,22 @@ export default function StudentOnboardingPage() {
               <Label htmlFor="satScore">SAT score (optional)</Label>
               <Input id="satScore" name="satScore" type="number" placeholder="SAT score" min={400} max={1600} />
             </div>
-
-            <div className="md:col-span-2">
-              <Button type="submit" className="w-full bg-blue-600 font-semibold text-white hover:bg-blue-700 md:w-auto">
-                Save profile
-              </Button>
-            </div>
           </form>
 
-          <p className="mt-5 text-base">
-            <span className="font-semibold">Status:</span> {status}
-          </p>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Status</span>
+            <Badge variant={status === "Student profile saved" ? "secondary" : "outline"}>{status}</Badge>
+          </div>
         </CardContent>
+        <CardFooter className="border-t pt-5">
+          <Button
+            type="submit"
+            form="student-onboarding-form"
+            className="w-full bg-blue-600 font-semibold text-white hover:bg-blue-700 sm:w-auto"
+          >
+            Save profile
+          </Button>
+        </CardFooter>
       </Card>
     </div>
   );
