@@ -283,9 +283,9 @@ This branch is dedicated to migrating the UI to Tailwind + shadcn/ui without cha
 - [ ] Remove auth-related legacy CSS rules no longer referenced.
 
 #### Phase 2 — Marketplace trust surfaces
-- [ ] `app/page.tsx` (landing credibility sections)
-- [ ] `app/mentors/page.tsx`
-- [ ] `app/mentors/[id]/page.tsx`
+- [x] `app/page.tsx` (landing credibility sections)
+- [x] `app/mentors/page.tsx`
+- [x] `app/mentors/[id]/page.tsx`
 - [ ] Introduce consistent card grid spacing tokens.
 
 #### Phase 3 — Onboarding and dashboard forms
