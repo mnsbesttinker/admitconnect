@@ -1,8 +1,15 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type Viewer = { name: string | null; email?: string | null; role: "student" | "tutor" | "admin" | null } | null;
+
+const textareaClassName =
+  "border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-24 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50";
 
 export default function TutorMessagesPage() {
   const [status, setStatus] = useState("Ready");
@@ -53,16 +60,40 @@ export default function TutorMessagesPage() {
   }
 
   return (
-    <div className="container">
-      <h1>Tutor Messages</h1>
-      <p className="muted">Tutors can reply only in student-initiated threads.</p>
-      <form className="card" onSubmit={reply} style={{ display: "grid", gap: "0.7rem" }}>
-        <input name="threadId" placeholder="Thread ID" required />
-        <input value={viewer?.name || ""} placeholder="Tutor display name" disabled readOnly />
-        <textarea name="text" placeholder="Reply message" required rows={3} />
-        <button type="submit" className="btn">Send reply</button>
-      </form>
-      <p><strong>Status:</strong> {status}</p>
+    <div className="mx-auto w-full max-w-6xl px-4 py-10">
+      <Card className="mx-auto max-w-3xl bg-white">
+        <CardHeader>
+          <CardTitle>Tutor Messages</CardTitle>
+          <CardDescription>Tutors can reply only in student-initiated threads.</CardDescription>
+        </CardHeader>
+
+        <CardContent className="grid gap-4">
+          <form className="grid gap-4" onSubmit={reply}>
+            <div className="grid gap-2">
+              <Label htmlFor="threadId">Thread ID</Label>
+              <Input id="threadId" name="threadId" placeholder="Thread ID" required />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="tutorName">Tutor display name</Label>
+              <Input id="tutorName" value={viewer?.name || ""} placeholder="Tutor display name" disabled readOnly />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="text">Reply message</Label>
+              <textarea id="text" name="text" placeholder="Reply message" required rows={3} className={textareaClassName} />
+            </div>
+
+            <Button type="submit" className="w-full md:w-auto">
+              Send reply
+            </Button>
+          </form>
+
+          <p className="text-sm">
+            <span className="font-semibold">Status:</span> {status}
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

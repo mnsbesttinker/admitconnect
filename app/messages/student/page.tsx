@@ -1,8 +1,15 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type Viewer = { name: string | null; email?: string | null; role: "student" | "tutor" | "admin" | null } | null;
+
+const textareaClassName =
+  "border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-24 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50";
 
 export default function StudentMessagesPage() {
   const [status, setStatus] = useState("Ready");
@@ -53,16 +60,39 @@ export default function StudentMessagesPage() {
   }
 
   return (
-    <div className="container">
-      <h1>Student Messages</h1>
-      <p className="muted">Students initiate contact. Tutors can only reply after a thread exists.</p>
-      <form className="card" onSubmit={startThread} style={{ display: "grid", gap: "0.7rem" }}>
-        <input value={viewer?.name || ""} placeholder="Your name" disabled readOnly />
-        <input name="tutorId" placeholder="Tutor ID (e.g. nora-mit)" required />
-        <textarea name="text" placeholder="Your first message" required rows={3} />
-        <button type="submit" className="btn">Start conversation</button>
-      </form>
-      <p><strong>Status:</strong> {status}</p>
+    <div className="mx-auto w-full max-w-6xl px-4 py-10">
+      <Card className="mx-auto max-w-3xl bg-white">
+        <CardHeader>
+          <CardTitle>Student Messages</CardTitle>
+          <CardDescription>Students initiate contact. Tutors can only reply after a thread exists.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <form className="grid gap-4" onSubmit={startThread}>
+            <div className="grid gap-2">
+              <Label htmlFor="studentName">Your name</Label>
+              <Input id="studentName" value={viewer?.name || ""} placeholder="Your name" disabled readOnly />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="tutorId">Tutor ID</Label>
+              <Input id="tutorId" name="tutorId" placeholder="Tutor ID (e.g. nora-mit)" required />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="text">First message</Label>
+              <textarea id="text" name="text" placeholder="Your first message" required rows={3} className={textareaClassName} />
+            </div>
+
+            <Button type="submit" className="w-full md:w-auto">
+              Start conversation
+            </Button>
+          </form>
+
+          <p className="text-sm">
+            <span className="font-semibold">Status:</span> {status}
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
