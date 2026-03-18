@@ -274,12 +274,12 @@ This branch is dedicated to migrating the UI to Tailwind + shadcn/ui without cha
    - Sign off each phase below before old CSS is removed.
 
 ### Phase progress snapshot
-- Phase 1 — Auth + Global Shell: **80%** (4/5 checklist items complete).
-- Phase 2 — Marketplace trust surfaces: **75%** (3/4 checklist items complete).
+- Phase 1 — Auth + Global Shell: **100%** (5/5 checklist items complete).
+- Phase 2 — Marketplace trust surfaces: **100%** (4/4 checklist items complete).
 - Phase 3 — Onboarding and dashboard forms: **100%** (6/6 checklist items complete).
 - Phase 4 — Booking + admin operations: **100%** (4/4 checklist items complete).
 - Phase 5 — Static/legal cleanup: **100%** (6/6 checklist items complete).
-- Phase 6 — Legacy CSS retirement: **0%** (0/3 checklist items complete).
+- Phase 6 — Legacy CSS retirement: **67%** (2/3 checklist items complete).
 
 ### Readability QA tracker (current sprint)
 - [x] Landing page readability pass: stronger hierarchy, larger title/body line-height, and high-contrast primary CTA.
@@ -294,13 +294,13 @@ This branch is dedicated to migrating the UI to Tailwind + shadcn/ui without cha
 - [x] Top nav converted away from old `.top-nav`/`.nav-*` classes.
 - [x] Login page migrated to shadcn primitives.
 - [x] Signup page migration (`app/signup/page.tsx`).
-- [ ] Remove auth-related legacy CSS rules no longer referenced.
+- [x] Remove auth-related legacy CSS rules no longer referenced.
 
 #### Phase 2 — Marketplace trust surfaces
 - [x] `app/page.tsx` (landing credibility sections)
 - [x] `app/mentors/page.tsx`
 - [x] `app/mentors/[id]/page.tsx`
-- [ ] Introduce consistent card grid spacing tokens.
+- [x] Introduce consistent card grid spacing tokens.
 
 #### Phase 3 — Onboarding and dashboard forms
 - [x] `app/tutor/onboarding/page.tsx`
@@ -325,8 +325,8 @@ This branch is dedicated to migrating the UI to Tailwind + shadcn/ui without cha
 - [x] `app/pricing/page.tsx`
 
 #### Phase 6 — Legacy CSS retirement
-- [ ] Remove unused `.container`, `.card`, `.btn`, `.badge`, `.muted`, `.form-grid`, `.nav-*` rules from `app/globals.css`.
-- [ ] Keep only Tailwind import + shadcn tokens + truly global base styles.
+- [x] Remove unused `.container`, `.card`, `.btn`, `.badge`, `.muted`, `.form-grid`, `.nav-*` rules from `app/globals.css`.
+- [x] Keep only Tailwind import + shadcn tokens + truly global base styles.
 - [ ] Run final regression sweep across all pages.
 
 ### Practical migration rule for each file
