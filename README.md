@@ -279,7 +279,7 @@ This branch is dedicated to migrating the UI to Tailwind + shadcn/ui without cha
 - [x] Root layout converted to Tailwind classes.
 - [x] Top nav converted away from old `.top-nav`/`.nav-*` classes.
 - [x] Login page migrated to shadcn primitives.
-- [ ] Signup page migration (`app/signup/page.tsx`).
+- [x] Signup page migration (`app/signup/page.tsx`).
 - [ ] Remove auth-related legacy CSS rules no longer referenced.
 
 #### Phase 2 — Marketplace trust surfaces
