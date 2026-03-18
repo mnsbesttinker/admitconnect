@@ -21,7 +21,7 @@ export default function RootLayout({
     <html lang="en" className={cn("font-sans", inter.variable)}>
       <body className="min-h-screen bg-background text-foreground">
         <header className="border-b">
-          <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
+          <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 lg:px-6">
             <Link href="/" className="text-lg font-extrabold tracking-tight">
               AdmitConnect
             </Link>

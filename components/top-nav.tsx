@@ -14,29 +14,11 @@ type Viewer = { name: string | null; email?: string | null; role: AppRole | null
 
 const navGroups: NavGroup[] = [
   {
-    key: "students",
-    title: "For Students",
+    key: "resources",
+    title: "Resources",
     items: [
-      { href: "/mentors", label: "Find a mentor" },
-      { href: "/book", label: "View / Create Bookings" },
+      { href: "/faq", label: "How it works" },
       { href: "/pricing", label: "Pricing" },
-      { href: "/messages/student", label: "Student messages" }
-    ]
-  },
-  {
-    key: "tutors",
-    title: "For Tutors",
-    items: [
-      { href: "/tutor/onboarding", label: "Tutor onboarding" },
-      { href: "/tutor/availability", label: "Tutor availability" },
-      { href: "/book", label: "My bookings" }
-    ]
-  },
-  {
-    key: "about",
-    title: "About Us",
-    items: [
-      { href: "/faq", label: "FAQ" },
       { href: "/trust-safety", label: "Trust & Safety" },
       { href: "/privacy", label: "Privacy" },
       { href: "/terms", label: "Terms" },
@@ -44,12 +26,15 @@ const navGroups: NavGroup[] = [
     ]
   },
   {
-    key: "auth",
-    title: "Sign Up / Login",
+    key: "dashboard",
+    title: "Dashboard",
     items: [
-      { href: "/signup", label: "Create account" },
-      { href: "/login", label: "Login" },
-      { href: "/student/onboarding", label: "Student onboarding" }
+      { href: "/book", label: "Bookings" },
+      { href: "/messages/student", label: "Student messages" },
+      { href: "/messages/tutor", label: "Tutor messages" },
+      { href: "/student/onboarding", label: "Student onboarding" },
+      { href: "/tutor/onboarding", label: "Tutor onboarding" },
+      { href: "/tutor/availability", label: "Tutor availability" }
     ]
   }
 ];
@@ -130,6 +115,16 @@ export default function TopNav() {
 
   return (
     <nav className="flex flex-wrap items-center justify-end gap-2" ref={navRef}>
+      <Button asChild variant="ghost" className="font-semibold">
+        <Link href="/mentors">Find a Mentor</Link>
+      </Button>
+      <Button asChild variant="ghost" className="font-semibold">
+        <Link href="/faq">About</Link>
+      </Button>
+      <Button asChild className="bg-blue-600 font-semibold text-white hover:bg-blue-700">
+        <Link href="/login">Sign In</Link>
+      </Button>
+
       {navGroups.map((group) => {
         const isOpen = openKey === group.key;
         return (
