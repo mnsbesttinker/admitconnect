@@ -328,6 +328,9 @@ This branch is dedicated to migrating the UI to Tailwind + shadcn/ui without cha
 - [x] Remove unused `.container`, `.card`, `.btn`, `.badge`, `.muted`, `.form-grid`, `.nav-*` rules from `app/globals.css`.
 - [x] Keep only Tailwind import + shadcn tokens + truly global base styles.
 - [ ] Run final regression sweep across all pages.
+  - Attempted in CI/container on 2026-03-18:
+    - `npm run lint` failed because `next` binary was unavailable before dependency install.
+    - `npm install` was blocked by registry access policy (`403 Forbidden` for `@prisma/client`), so full lint/build verification remains pending for a network-enabled environment.
 
 ### Practical migration rule for each file
 1. Replace inline `style={{...}}` with Tailwind classes.
