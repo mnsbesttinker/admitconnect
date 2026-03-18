@@ -311,7 +311,7 @@ This branch is dedicated to migrating the UI to Tailwind + shadcn/ui without cha
 - [x] `app/messages/tutor/page.tsx`
 
 #### Phase 4 — Booking + admin operations
-- [x] `components/booking-flow.tsx`
+- [x] Remove legacy MVP booking/payment tester UI from `app/book/page.tsx`
 - [x] `app/book/page.tsx`
 - [x] `app/admin/verification/page.tsx`
 - [x] Add `table`, `alert`, `skeleton`, `dialog` components when needed.

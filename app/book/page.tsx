@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import BookingFlow from "@/components/booking-flow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -50,7 +49,7 @@ export default function BookPage() {
           <CardTitle>Book a Session</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <p className="text-sm">Browse tutors and book an available slot from their profile.</p>
+          <p className="text-sm">Browse tutors and book an available slot directly from each mentor profile.</p>
           <div>
             <Button asChild>
               <Link href="/mentors">Browse tutors</Link>
@@ -73,8 +72,6 @@ export default function BookPage() {
           ))}
         </CardContent>
       </Card>
-
-      <BookingFlow />
     </div>
   );
 }
