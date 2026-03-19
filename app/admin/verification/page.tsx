@@ -1,6 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 type Submission = {
   id: string;
@@ -73,33 +77,68 @@ export default function AdminVerificationPage() {
   }
 
   return (
-    <div className="container">
-      <h1>Admin Tutor Verification</h1>
-      <p className="muted">Review pending tutor applications and approve or reject.</p>
-      <p><strong>Status:</strong> {status}</p>
+    <div className="mx-auto grid w-full max-w-6xl gap-5 px-4 py-10">
+      <Card className="bg-white">
+        <CardHeader>
+          <CardTitle>Admin Tutor Verification</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert>
+            <AlertTitle>Review queue</AlertTitle>
+            <AlertDescription>{status}</AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
 
-      <div className="grid" style={{ gridTemplateColumns: "1fr" }}>
-        {submissions.map((submission) => (
-          <section key={submission.id} className="card">
-            <h3 style={{ marginTop: 0 }}>{submission.name}</h3>
-            <p className="muted">{submission.university} · ${submission.hourlyRateUsd}/hr</p>
-            <p>{submission.offeringSummary}</p>
-            <h4>Profile photo</h4>
-            <p className="muted">{submission.profilePhotoFileName}</p>
-            <h4>Credential documents</h4>
-            <ul>
-              {submission.credentialDocuments.map((documentUrl) => (
-                <li key={documentUrl}>{documentUrl}</li>
-              ))}
-            </ul>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
-              <button type="button" className="btn" onClick={() => decide(submission.id, "approve")}>Approve</button>
-              <button type="button" className="btn" onClick={() => decide(submission.id, "reject")}>Reject</button>
-            </div>
-          </section>
-        ))}
-        {submissions.length === 0 && <section className="card">No pending tutor applications.</section>}
-      </div>
+      <Card className="bg-white">
+        <CardHeader>
+          <CardTitle>Pending submissions ({submissions.length})</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          {submissions.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No pending tutor applications.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>University</TableHead>
+                  <TableHead>Rate</TableHead>
+                  <TableHead>Profile photo</TableHead>
+                  <TableHead>Credential docs</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {submissions.map((submission) => (
+                  <TableRow key={submission.id}>
+                    <TableCell className="font-medium">{submission.name}</TableCell>
+                    <TableCell>{submission.university}</TableCell>
+                    <TableCell>${submission.hourlyRateUsd}/hr</TableCell>
+                    <TableCell>{submission.profilePhotoFileName}</TableCell>
+                    <TableCell>{submission.credentialDocuments.length}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button type="button" onClick={() => decide(submission.id, "approve")}>Approve</Button>
+                        <Button type="button" variant="secondary" onClick={() => decide(submission.id, "reject")}>Reject</Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+
+          {submissions.map((submission) => (
+            <Card key={`summary-${submission.id}`} className="py-4">
+              <CardContent className="grid gap-2 px-4">
+                <p className="text-sm font-medium">{submission.name}</p>
+                <p className="text-muted-foreground text-sm">{submission.offeringSummary}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </CardContent>
+      </Card>
     </div>
   );
 }
