@@ -22,17 +22,16 @@ const valueProps = [
 
 const testimonials = [
   {
-    quote:
-      "I stopped guessing what admissions officers wanted. My mentor helped me pick essays and a school list that actually matched my budget.",
-    person: "Grade 12 student, India"
+    quote: "...genuinely thank you because you just showed me a whole new perspective of writing MY personal statement",
+    person: "Anonymous Reddit User"
   },
   {
-    quote: "It felt like talking to someone who had just done this — not a generic consultant reading from a script.",
-    person: "Parent of applicant, Nigeria"
+    quote: "I would also like to thank you so much. You have helped me immensely",
+    person: "Anonymous Reddit User"
   },
   {
-    quote: "Our sessions were practical. Every call ended with a clear next step, and my daughter felt less overwhelmed.",
-    person: "Parent, UAE"
+    quote: "thank you so much! this is really helpful :)",
+    person: "Anonymous Reddit User"
   }
 ];
 
@@ -120,7 +119,7 @@ export default function HomePage() {
         <div className="space-y-2">
           <h2 className="text-2xl font-black tracking-tight md:text-3xl">What students and parents say</h2>
           <p className="text-muted-foreground text-base leading-7">
-            Placeholder quote cards styled for quick replacement with your final Reddit-sourced testimonials.
+            See what people think of our tutors
           </p>
         </div>
         <div className="grid gap-4 md:grid-cols-3">

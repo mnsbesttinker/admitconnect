@@ -19,13 +19,26 @@ type Tutor = {
 
 export default function MentorDirectoryPage() {
   const [tutors, setTutors] = useState<Tutor[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
-      const response = await fetch("/api/tutors", { cache: "no-store" });
-      const payload = await response.json();
-      if (response.ok) {
+      try {
+        setIsLoading(true);
+        const response = await fetch("/api/tutors", { cache: "no-store" });
+
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload?.error || "Failed to load tutors.");
+        }
+
         setTutors(payload.data as Tutor[]);
+        setLoadError(null);
+      } catch {
+        setLoadError("We could not load the tutor directory right now. Please refresh shortly.");
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -41,7 +54,19 @@ export default function MentorDirectoryPage() {
         </p>
       </header>
 
-      {tutors.length === 0 ? (
+      {isLoading ? (
+        <Card>
+          <CardContent className="py-8">
+            <p className="text-muted-foreground text-sm">Loading tutor directory…</p>
+          </CardContent>
+        </Card>
+      ) : loadError ? (
+        <Card>
+          <CardContent className="py-8">
+            <p className="text-muted-foreground text-sm">{loadError}</p>
+          </CardContent>
+        </Card>
+      ) : tutors.length === 0 ? (
         <Card>
           <CardContent className="py-8">
             <p className="text-muted-foreground text-sm">No tutors are publicly listed yet. Please check back soon.</p>

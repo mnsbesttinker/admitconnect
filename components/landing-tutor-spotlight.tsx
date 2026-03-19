@@ -21,15 +21,35 @@ type Tutor = {
 export default function LandingTutorSpotlight() {
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadTutors() {
-      const response = await fetch("/api/tutors", { cache: "no-store" });
-      const payload = await response.json();
+      try {
+        setIsLoading(true);
+        const response = await fetch("/api/tutors?scope=spotlight&limit=8", { cache: "no-store" });
 
-      if (response.ok) {
-        setTutors(payload.data as Tutor[]);
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload?.error || "Failed to load tutor spotlight.");
+        }
+
+        const items = (payload.data as Tutor[]) ?? [];
+        setTutors(items);
         setActiveIndex(0);
+
+        if (items.length === 0) {
+          setLoadError("No tutors are available for spotlight yet.");
+          return;
+        }
+
+        setLoadError(null);
+      } catch {
+        setLoadError("Tutor spotlight is temporarily unavailable. Please refresh in a moment.");
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -49,11 +69,21 @@ export default function LandingTutorSpotlight() {
     setActiveIndex((current) => (current + 1) % tutors.length);
   }
 
+  if (isLoading) {
+    return (
+      <Card className="bg-white">
+        <CardContent className="py-8">
+          <p className="text-muted-foreground text-sm">Loading tutor spotlight…</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!activeTutor) {
     return (
       <Card className="bg-white">
         <CardContent className="py-8">
-          <p className="text-muted-foreground text-sm">Tutor spotlight is loading.</p>
+          <p className="text-muted-foreground text-sm">{loadError ?? "Tutor spotlight is unavailable right now."}</p>
         </CardContent>
       </Card>
     );
