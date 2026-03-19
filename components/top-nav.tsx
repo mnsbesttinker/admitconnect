@@ -2,41 +2,35 @@
 
 import Link from "next/link";
 import type { Route } from "next";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { AppRole } from "@/lib/auth-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 type NavItem = { href: Route; label: string };
-type NavGroup = { key: string; title: string; items: NavItem[] };
 type Viewer = { name: string | null; email?: string | null; role: AppRole | null } | null;
 
-const navGroups: NavGroup[] = [
-  {
-    key: "resources",
-    title: "Resources",
-    items: [
-      { href: "/faq", label: "How it works" },
-      { href: "/pricing", label: "Pricing" },
-      { href: "/trust-safety", label: "Trust & Safety" },
-      { href: "/privacy", label: "Privacy" },
-      { href: "/terms", label: "Terms" },
-      { href: "/refund-policy", label: "Refund policy" }
-    ]
-  },
-  {
-    key: "dashboard",
-    title: "Dashboard",
-    items: [
-      { href: "/book", label: "Bookings" },
-      { href: "/messages/student", label: "Student messages" },
-      { href: "/messages/tutor", label: "Tutor messages" },
-      { href: "/student/onboarding", label: "Student onboarding" },
-      { href: "/tutor/onboarding", label: "Tutor onboarding" },
-      { href: "/tutor/availability", label: "Tutor availability" }
-    ]
-  }
+const resourcesItems: NavItem[] = [
+  { href: "/faq", label: "How it works" },
+  { href: "/pricing", label: "Pricing" },
+  { href: "/trust-safety", label: "Trust & Safety" },
+  { href: "/privacy", label: "Privacy" },
+  { href: "/terms", label: "Terms" },
+  { href: "/refund-policy", label: "Refund policy" }
+];
+
+const studentItems: NavItem[] = [
+  { href: "/student/onboarding", label: "Student onboarding" },
+  { href: "/messages/student", label: "Student messages" },
+  { href: "/book", label: "Bookings" }
+];
+
+const tutorItems: NavItem[] = [
+  { href: "/messages/tutor", label: "Tutor messages" },
+  { href: "/tutor/availability", label: "Tutor availability" },
+  { href: "/book", label: "Bookings" },
+  { href: "/tutor/onboarding", label: "Tutor onboarding" }
 ];
 
 export default function TopNav() {
@@ -46,6 +40,13 @@ export default function TopNav() {
   const [viewer, setViewer] = useState<Viewer>(null);
   const [isLoadingViewer, setIsLoadingViewer] = useState(true);
   const navRef = useRef<HTMLElement | null>(null);
+
+  const roleItems = useMemo(() => {
+    if (!viewer?.role) return [];
+    return viewer.role === "student" ? studentItems : tutorItems;
+  }, [viewer?.role]);
+
+  const roleTitle = viewer?.role === "student" ? "Student" : viewer?.role === "tutor" ? "Tutor" : null;
 
   const loadViewer = useCallback(async () => {
     setIsLoadingViewer(true);
@@ -116,48 +117,76 @@ export default function TopNav() {
   return (
     <nav className="flex flex-wrap items-center justify-end gap-2" ref={navRef}>
       <Button asChild variant="ghost" className="font-semibold">
+        <Link href="/">Home</Link>
+      </Button>
+      <Button asChild variant="ghost" className="font-semibold">
         <Link href="/mentors">Find a Mentor</Link>
       </Button>
       <Button asChild variant="ghost" className="font-semibold">
         <Link href="/faq">About</Link>
       </Button>
-      <Button asChild className="bg-blue-600 font-semibold text-white hover:bg-blue-700">
-        <Link href="/login">Sign In</Link>
-      </Button>
 
-      {navGroups.map((group) => {
-        const isOpen = openKey === group.key;
-        return (
-          <div className="relative" key={group.key}>
-            <Button
-              type="button"
-              variant="outline"
-              aria-expanded={isOpen}
-              onClick={() => setOpenKey(isOpen ? null : group.key)}
-            >
-              {group.title}
-            </Button>
-            {isOpen && (
-              <div className="bg-background absolute right-0 z-20 mt-2 grid min-w-56 gap-1 rounded-xl border p-2 shadow-lg">
-                {group.items.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="hover:bg-muted rounded-md px-3 py-2 text-sm"
-                    onClick={() => setOpenKey(null)}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            )}
+      <div className="relative">
+        <Button
+          type="button"
+          variant="outline"
+          aria-expanded={openKey === "resources"}
+          onClick={() => setOpenKey(openKey === "resources" ? null : "resources")}
+        >
+          Resources
+        </Button>
+        {openKey === "resources" && (
+          <div className="bg-background absolute right-0 z-20 mt-2 grid min-w-56 gap-1 rounded-xl border p-2 shadow-lg">
+            {resourcesItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="hover:bg-muted rounded-md px-3 py-2 text-sm"
+                onClick={() => setOpenKey(null)}
+              >
+                {item.label}
+              </Link>
+            ))}
           </div>
-        );
-      })}
+        )}
+      </div>
+
+      {roleTitle && roleItems.length > 0 && (
+        <div className="relative">
+          <Button
+            type="button"
+            variant="outline"
+            aria-expanded={openKey === "role"}
+            onClick={() => setOpenKey(openKey === "role" ? null : "role")}
+          >
+            {roleTitle}
+          </Button>
+          {openKey === "role" && (
+            <div className="bg-background absolute right-0 z-20 mt-2 grid min-w-56 gap-1 rounded-xl border p-2 shadow-lg">
+              {roleItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="hover:bg-muted rounded-md px-3 py-2 text-sm"
+                  onClick={() => setOpenKey(null)}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="bg-muted/40 ml-2 flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm" aria-live="polite">
-        {!isLoadingViewer && !viewer && <span className="text-muted-foreground">Guest</span>}
         {isLoadingViewer && <span className="text-muted-foreground">Checking session...</span>}
+
+        {!isLoadingViewer && !viewer && (
+          <Button asChild size="sm" className="bg-blue-600 font-semibold text-white hover:bg-blue-700">
+            <Link href="/login">Sign In</Link>
+          </Button>
+        )}
+
         {viewer && (
           <>
             <span className="max-w-36 truncate">{viewer.name || viewer.email}</span>
