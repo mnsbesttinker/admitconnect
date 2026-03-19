@@ -54,9 +54,10 @@ function normalizeLimit(rawLimit: string | null) {
 
 function isMissingProfileImageColumnError(error: unknown) {
   const maybe = error as { code?: string; message?: string } | null;
-  if (!maybe?.message) return false;
+  const message = (maybe?.message || "").toLowerCase();
 
-  return maybe.code === "P2022" || maybe.message.includes("TutorProfile.profileImageUrl") || maybe.message.toLowerCase().includes("column") && maybe.message.includes("profileImageUrl");
+  if (maybe?.code === "P2022") return true;
+  return message.includes("tutorprofile.profileimageurl") || (message.includes("column") && message.includes("profileimageurl") && message.includes("does not exist"));
 }
 
 async function fetchTutors(scope: string, requestedLimit?: number): Promise<TutorRecord[]> {
