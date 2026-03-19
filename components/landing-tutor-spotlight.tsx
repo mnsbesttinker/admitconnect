@@ -25,17 +25,10 @@ export default function LandingTutorSpotlight() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    const controller = new AbortController();
-
     async function loadTutors() {
       try {
         setIsLoading(true);
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        const response = await fetch("/api/tutors?scope=spotlight&limit=8", {
-          cache: "no-store",
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
+        const response = await fetch("/api/tutors?scope=spotlight&limit=8", { cache: "no-store" });
 
         const payload = await response.json();
 
@@ -61,8 +54,6 @@ export default function LandingTutorSpotlight() {
     }
 
     void loadTutors();
-
-    return () => controller.abort();
   }, []);
 
   const activeTutor = useMemo(() => tutors[activeIndex] ?? null, [tutors, activeIndex]);

@@ -2,14 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { DbTimeoutError, withDbTimeout } from "@/lib/db-timeout";
 
-const DEFAULT_LIMIT = 24;
-const MAX_LIMIT = 60;
 const SPOTLIGHT_LIMIT = 8;
+const MAX_LIMIT = 60;
 
-function normalizeLimit(rawLimit: string | null, fallback: number) {
+function normalizeLimit(rawLimit: string | null) {
   const parsed = Number.parseInt(rawLimit ?? "", 10);
   if (Number.isNaN(parsed) || parsed <= 0) {
-    return fallback;
+    return undefined;
   }
 
   return Math.min(parsed, MAX_LIMIT);
@@ -20,18 +19,11 @@ export async function GET(request: NextRequest) {
   const major = (searchParams.get("major") || "").trim().toLowerCase();
   const query = (searchParams.get("q") || "").trim().toLowerCase();
   const scope = (searchParams.get("scope") || "directory").trim().toLowerCase();
-  const limit = normalizeLimit(searchParams.get("limit"), scope === "spotlight" ? SPOTLIGHT_LIMIT : DEFAULT_LIMIT);
+  const requestedLimit = normalizeLimit(searchParams.get("limit"));
 
   try {
     const tutors = await withDbTimeout(
       prisma.tutorProfile.findMany({
-        where: {
-          user: {
-            fullName: {
-              not: ""
-            }
-          }
-        },
         select: {
           userId: true,
           school: true,
@@ -54,13 +46,20 @@ export async function GET(request: NextRequest) {
             createdAt: "desc"
           }
         },
-        take: limit
-      })
+        ...(scope === "spotlight" ? { take: requestedLimit ?? SPOTLIGHT_LIMIT } : requestedLimit ? { take: requestedLimit } : {})
+      }),
+      15000
     );
 
     const filtered = tutors.filter((entry) => {
-      const matchesMajor = !major || entry.major.toLowerCase().includes(major);
-      const haystack = [entry.user.fullName, entry.school, entry.major, entry.bio, entry.specialties].join(" ").toLowerCase();
+      const fullName = entry.user?.fullName ?? "";
+      const majorValue = entry.major ?? "";
+      const school = entry.school ?? "";
+      const bio = entry.bio ?? "";
+      const specialties = entry.specialties ?? "";
+
+      const matchesMajor = !major || majorValue.toLowerCase().includes(major);
+      const haystack = [fullName, school, majorValue, bio, specialties].join(" ").toLowerCase();
       const matchesQuery = !query || haystack.includes(query);
       return matchesMajor && matchesQuery;
     });
@@ -68,8 +67,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       data: filtered.map((entry) => ({
         id: entry.userId,
-        fullName: entry.user.fullName,
-        timezone: entry.user.timezone,
+        fullName: entry.user?.fullName || "Tutor",
+        timezone: entry.user?.timezone || "UTC",
         school: entry.school,
         major: entry.major,
         bio: entry.bio,

@@ -23,14 +23,10 @@ export default function MentorDirectoryPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    const controller = new AbortController();
-
     async function load() {
       try {
         setIsLoading(true);
-        const timeoutId = setTimeout(() => controller.abort(), 7000);
-        const response = await fetch("/api/tutors", { cache: "no-store", signal: controller.signal });
-        clearTimeout(timeoutId);
+        const response = await fetch("/api/tutors", { cache: "no-store" });
 
         const payload = await response.json();
         if (!response.ok) {
@@ -47,7 +43,6 @@ export default function MentorDirectoryPage() {
     }
 
     void load();
-    return () => controller.abort();
   }, []);
 
   return (
