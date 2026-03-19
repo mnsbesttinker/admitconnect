@@ -20,7 +20,8 @@ export async function GET() {
       bio: entry.bio,
       specialties: entry.specialties,
       hourlyRate: entry.hourlyRate,
-      isVerified: entry.isVerified
+      isVerified: entry.isVerified,
+      profileImageUrl: entry.profileImageUrl || null
     }))
   });
 }

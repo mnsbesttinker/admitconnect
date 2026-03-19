@@ -1,6 +1,9 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 
 type Slot = {
   id: string;
@@ -8,6 +11,9 @@ type Slot = {
   endTimeUtc: string;
   isBooked: boolean;
 };
+
+const datetimeClassName =
+  "border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring h-9 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50";
 
 export default function TutorAvailabilityPage() {
   const [status, setStatus] = useState("Ready");
@@ -56,19 +62,46 @@ export default function TutorAvailabilityPage() {
     await loadSlots();
   }
 
-  return <div className="container"><h1>Tutor availability</h1><form className="card form-grid" onSubmit={handleSubmit}>
-    <label>Start local datetime<input type="datetime-local" name="startLocal" required /></label>
-    <label>End local datetime<input type="datetime-local" name="endLocal" required /></label>
-    <button className="btn" type="submit">Add slot</button>
-  </form><p><strong>Status:</strong> {status}</p>
-    <section className="card" style={{ marginTop: "1rem" }}>
-      <h3 style={{ marginTop: 0 }}>Open slots ({slots.length})</h3>
-      {slots.length === 0 && <p className="muted">No slots created yet.</p>}
-      {slots.map((slot) => (
-        <p key={slot.id}>
-          {new Date(slot.startTimeUtc).toLocaleString()} → {new Date(slot.endTimeUtc).toLocaleTimeString()}
-        </p>
-      ))}
-    </section>
-  </div>;
+  return (
+    <div className="mx-auto w-full max-w-6xl px-4 py-10">
+      <Card className="mx-auto max-w-4xl bg-white">
+        <CardHeader>
+          <CardTitle>Tutor availability</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-5">
+          <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
+            <div className="grid gap-2">
+              <Label htmlFor="startLocal">Start local datetime</Label>
+              <input id="startLocal" type="datetime-local" name="startLocal" required className={datetimeClassName} />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="endLocal">End local datetime</Label>
+              <input id="endLocal" type="datetime-local" name="endLocal" required className={datetimeClassName} />
+            </div>
+
+            <div className="md:col-span-2">
+              <Button type="submit" className="w-full md:w-auto">
+                Add slot
+              </Button>
+            </div>
+          </form>
+
+          <p className="text-sm">
+            <span className="font-semibold">Status:</span> {status}
+          </p>
+
+          <section className="grid gap-3 rounded-lg border bg-muted/20 p-4">
+            <h3 className="text-lg font-semibold">Open slots ({slots.length})</h3>
+            {slots.length === 0 && <p className="text-muted-foreground text-sm">No slots created yet.</p>}
+            {slots.map((slot) => (
+              <p key={slot.id} className="text-sm">
+                {new Date(slot.startTimeUtc).toLocaleString()} → {new Date(slot.endTimeUtc).toLocaleTimeString()}
+              </p>
+            ))}
+          </section>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
