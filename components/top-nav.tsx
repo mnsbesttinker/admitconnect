@@ -6,14 +6,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { AppRole } from "@/lib/auth-store";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 type NavItem = { href: Route; label: string };
 type Viewer = { name: string | null; email?: string | null; role: AppRole | null } | null;
 
 const resourcesItems: NavItem[] = [
   { href: "/faq", label: "How it works" },
-  { href: "/pricing", label: "Pricing" },
   { href: "/trust-safety", label: "Trust & Safety" },
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },
@@ -46,7 +44,7 @@ export default function TopNav() {
     return viewer.role === "student" ? studentItems : tutorItems;
   }, [viewer?.role]);
 
-  const roleTitle = viewer?.role === "student" ? "Student" : viewer?.role === "tutor" ? "Tutor" : null;
+  const profileLabel = viewer?.name || viewer?.email || "Profile";
 
   const loadViewer = useCallback(async () => {
     setIsLoadingViewer(true);
@@ -112,6 +110,7 @@ export default function TopNav() {
 
     setViewer(null);
     router.refresh();
+    setOpenKey(null);
   }
 
   return (
@@ -151,18 +150,25 @@ export default function TopNav() {
         )}
       </div>
 
-      {roleTitle && roleItems.length > 0 && (
+      {isLoadingViewer ? (
+        <span className="text-muted-foreground px-2 text-sm">Checking session...</span>
+      ) : !viewer ? (
+        <Button asChild className="bg-blue-600 font-semibold text-white hover:bg-blue-700">
+          <Link href="/login">Sign In</Link>
+        </Button>
+      ) : (
         <div className="relative">
           <Button
             type="button"
             variant="outline"
-            aria-expanded={openKey === "role"}
-            onClick={() => setOpenKey(openKey === "role" ? null : "role")}
+            className="max-w-52"
+            aria-expanded={openKey === "profile"}
+            onClick={() => setOpenKey(openKey === "profile" ? null : "profile")}
           >
-            {roleTitle}
+            <span className="truncate">{profileLabel}</span>
           </Button>
-          {openKey === "role" && (
-            <div className="bg-background absolute right-0 z-20 mt-2 grid min-w-56 gap-1 rounded-xl border p-2 shadow-lg">
+          {openKey === "profile" && (
+            <div className="bg-background absolute right-0 z-20 mt-2 grid min-w-60 gap-1 rounded-xl border p-2 shadow-lg">
               {roleItems.map((item) => (
                 <Link
                   key={item.href}
@@ -173,30 +179,17 @@ export default function TopNav() {
                   {item.label}
                 </Link>
               ))}
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="hover:bg-muted rounded-md px-3 py-2 text-left text-sm font-medium"
+              >
+                Logout
+              </button>
             </div>
           )}
         </div>
       )}
-
-      <div className="bg-muted/40 ml-2 flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm" aria-live="polite">
-        {isLoadingViewer && <span className="text-muted-foreground">Checking session...</span>}
-
-        {!isLoadingViewer && !viewer && (
-          <Button asChild size="sm" className="bg-blue-600 font-semibold text-white hover:bg-blue-700">
-            <Link href="/login">Sign In</Link>
-          </Button>
-        )}
-
-        {viewer && (
-          <>
-            <span className="max-w-36 truncate">{viewer.name || viewer.email}</span>
-            {viewer.role && <Badge variant="secondary">{viewer.role}</Badge>}
-            <Button type="button" onClick={handleLogout} variant="secondary" size="sm">
-              Logout
-            </Button>
-          </>
-        )}
-      </div>
     </nav>
   );
 }
