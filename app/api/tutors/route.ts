@@ -5,6 +5,44 @@ import { DbTimeoutError, withDbTimeout } from "@/lib/db-timeout";
 const SPOTLIGHT_LIMIT = 8;
 const MAX_LIMIT = 60;
 
+const tutorSelectBase = {
+  userId: true,
+  school: true,
+  major: true,
+  bio: true,
+  specialties: true,
+  hourlyRate: true,
+  isVerified: true,
+  user: {
+    select: {
+      fullName: true,
+      timezone: true,
+      createdAt: true
+    }
+  }
+} as const;
+
+const tutorSelectWithImage = {
+  ...tutorSelectBase,
+  profileImageUrl: true
+} as const;
+
+type TutorRecord = {
+  userId: string;
+  school: string;
+  major: string;
+  bio: string;
+  specialties: string;
+  hourlyRate: number;
+  isVerified: boolean;
+  profileImageUrl?: string | null;
+  user: {
+    fullName: string;
+    timezone: string;
+    createdAt: Date;
+  } | null;
+};
+
 function normalizeLimit(rawLimit: string | null) {
   const parsed = Number.parseInt(rawLimit ?? "", 10);
   if (Number.isNaN(parsed) || parsed <= 0) {
@@ -12,6 +50,42 @@ function normalizeLimit(rawLimit: string | null) {
   }
 
   return Math.min(parsed, MAX_LIMIT);
+}
+
+function isMissingProfileImageColumnError(error: unknown) {
+  const maybe = error as { code?: string; message?: string } | null;
+  if (!maybe?.message) return false;
+
+  return maybe.code === "P2022" || maybe.message.includes("TutorProfile.profileImageUrl") || maybe.message.toLowerCase().includes("column") && maybe.message.includes("profileImageUrl");
+}
+
+async function fetchTutors(scope: string, requestedLimit?: number): Promise<TutorRecord[]> {
+  const take = scope === "spotlight" ? requestedLimit ?? SPOTLIGHT_LIMIT : requestedLimit;
+
+  const commonQuery = {
+    orderBy: {
+      user: {
+        createdAt: "desc" as const
+      }
+    },
+    ...(take ? { take } : {})
+  };
+
+  try {
+    return (await prisma.tutorProfile.findMany({
+      ...commonQuery,
+      select: tutorSelectWithImage
+    })) as TutorRecord[];
+  } catch (error) {
+    if (!isMissingProfileImageColumnError(error)) {
+      throw error;
+    }
+
+    return (await prisma.tutorProfile.findMany({
+      ...commonQuery,
+      select: tutorSelectBase
+    })) as TutorRecord[];
+  }
 }
 
 export async function GET(request: NextRequest) {
@@ -22,34 +96,7 @@ export async function GET(request: NextRequest) {
   const requestedLimit = normalizeLimit(searchParams.get("limit"));
 
   try {
-    const tutors = await withDbTimeout(
-      prisma.tutorProfile.findMany({
-        select: {
-          userId: true,
-          school: true,
-          major: true,
-          bio: true,
-          specialties: true,
-          hourlyRate: true,
-          isVerified: true,
-          profileImageUrl: true,
-          user: {
-            select: {
-              fullName: true,
-              timezone: true,
-              createdAt: true
-            }
-          }
-        },
-        orderBy: {
-          user: {
-            createdAt: "desc"
-          }
-        },
-        ...(scope === "spotlight" ? { take: requestedLimit ?? SPOTLIGHT_LIMIT } : requestedLimit ? { take: requestedLimit } : {})
-      }),
-      15000
-    );
+    const tutors = await withDbTimeout(fetchTutors(scope, requestedLimit), 15000);
 
     const filtered = tutors.filter((entry) => {
       const fullName = entry.user?.fullName ?? "";
