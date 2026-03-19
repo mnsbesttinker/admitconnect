@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,6 +76,12 @@ export default function LoginPage() {
             <Button className="w-full" disabled={isSubmitting} type="submit">
               {isSubmitting ? "Logging in..." : "Login"}
             </Button>
+            <p className="text-muted-foreground text-center text-sm">
+              New to AdmitConnect?{" "}
+              <Link href="/signup" className="font-semibold text-blue-700 hover:underline">
+                Create an account
+              </Link>
+            </p>
             {error && <p className="text-sm text-red-700">{error}</p>}
             {success && <p className="text-sm text-emerald-700">{success}</p>}
           </form>
