@@ -124,13 +124,13 @@ export default function LandingTutorSpotlight() {
           )}
         </div>
 
-        <div className="grid content-between gap-5 p-6 md:p-7">
+        <div className="grid content-between gap-5 p-4 sm:p-5 md:p-7">
           <CardHeader className="px-0">
             <div className="flex flex-wrap items-center gap-2">
               {activeTutor.isVerified && <Badge variant="secondary">Verified</Badge>}
               <Badge variant="outline">${activeTutor.hourlyRate}/hr</Badge>
             </div>
-            <CardTitle className="mt-2 text-2xl font-bold">{activeTutor.fullName}</CardTitle>
+            <CardTitle className="mt-2 text-xl font-bold sm:text-2xl">{activeTutor.fullName}</CardTitle>
             <p className="text-muted-foreground text-sm">
               {activeTutor.school} · {activeTutor.major}
             </p>
@@ -145,18 +145,18 @@ export default function LandingTutorSpotlight() {
               ))}
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+            <div className="grid gap-3 border-t pt-4 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
               <div className="text-muted-foreground text-sm">
                 {tutors.length > 1 ? `Tutor ${activeIndex + 1} of ${tutors.length}` : "Featured tutor"}
               </div>
-              <div className="flex items-center gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={goPrevious} disabled={!canNavigate}>
+              <div className="grid grid-cols-[1fr_1fr] gap-2 sm:flex sm:items-center">
+                <Button type="button" variant="outline" size="sm" onClick={goPrevious} disabled={!canNavigate} className="h-10">
                   ←
                 </Button>
-                <Button type="button" variant="outline" size="sm" onClick={goNext} disabled={!canNavigate}>
+                <Button type="button" variant="outline" size="sm" onClick={goNext} disabled={!canNavigate} className="h-10">
                   →
                 </Button>
-                <Button asChild size="sm" className="bg-blue-600 text-white hover:bg-blue-700">
+                <Button asChild size="sm" className="col-span-2 h-10 bg-blue-600 text-white hover:bg-blue-700 sm:col-span-1 sm:h-9">
                   <Link href={`/mentors/${activeTutor.id}`}>View profile</Link>
                 </Button>
               </div>

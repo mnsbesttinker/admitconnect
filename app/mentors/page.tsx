@@ -46,7 +46,7 @@ export default function MentorDirectoryPage() {
   }, []);
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-10 lg:px-6">
+    <div className="mx-auto w-full max-w-7xl px-4 py-7 md:py-10 lg:px-6">
       <header className="mb-8 max-w-3xl space-y-2">
         <h1 className="text-3xl font-black tracking-tight sm:text-4xl">Tutor Directory</h1>
         <p className="text-muted-foreground text-base leading-7 md:text-lg">
@@ -75,7 +75,7 @@ export default function MentorDirectoryPage() {
       ) : (
         <div className="grid items-stretch gap-5 md:grid-cols-2 xl:grid-cols-3">
           {tutors.map((tutor) => (
-            <Card key={tutor.id} className="h-full min-h-[24rem] bg-white">
+            <Card key={tutor.id} className="h-full bg-white">
               <CardHeader className="space-y-3">
                 <div className="space-y-1">
                   <CardTitle className="text-2xl leading-tight font-extrabold">{tutor.fullName}</CardTitle>
@@ -108,9 +108,9 @@ export default function MentorDirectoryPage() {
                   })}
                 </div>
               </CardContent>
-              <CardFooter className="mt-auto flex items-center justify-between gap-4 border-t pt-5">
+              <CardFooter className="mt-auto flex flex-col items-stretch gap-3 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-xl font-black">${tutor.hourlyRate}/hr</p>
-                <Button asChild className="bg-blue-600 font-semibold text-white hover:bg-blue-700">
+                <Button asChild className="h-11 w-full bg-blue-600 font-semibold text-white hover:bg-blue-700 sm:h-10 sm:w-auto">
                   <Link href={`/mentors/${tutor.id}`}>View profile</Link>
                 </Button>
               </CardFooter>

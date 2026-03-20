@@ -62,25 +62,25 @@ const howItWorks = [
 
 export default function HomePage() {
   return (
-    <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-10 md:gap-14 lg:px-6">
-      <section className="grid items-center gap-8 rounded-2xl border bg-white p-6 md:p-10 lg:grid-cols-2">
+    <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-7 md:gap-14 md:py-10 lg:px-6">
+      <section className="grid items-center gap-6 rounded-2xl border bg-white p-5 md:gap-8 md:p-10 lg:grid-cols-2">
         <div className="space-y-6">
           <Badge variant="secondary" className="w-fit text-xs font-semibold tracking-wide">
             Trusted by students pursuing aid-aware admissions
           </Badge>
           <div className="space-y-4">
-            <h1 className="text-4xl font-black leading-tight tracking-tight md:text-5xl">
+            <h1 className="text-3xl font-black leading-tight tracking-tight sm:text-4xl md:text-5xl">
               You don’t need to pay $20k for college consulting
             </h1>
-            <p className="text-muted-foreground max-w-xl text-base leading-8 md:text-lg">
+            <p className="text-muted-foreground max-w-xl text-base leading-7 md:leading-8 md:text-lg">
               Get affordable guidance from students who actually won scholarships and figured the process out themselves
             </p>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Button asChild className="bg-blue-600 font-semibold text-white hover:bg-blue-700">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Button asChild className="h-11 w-full bg-blue-600 font-semibold text-white hover:bg-blue-700 sm:w-auto">
               <Link href="/mentors">Find a Mentor</Link>
             </Button>
-            <Button asChild variant="outline" className="font-semibold">
+            <Button asChild variant="outline" className="h-11 w-full font-semibold sm:w-auto">
               <Link href="/faq">How It Works</Link>
             </Button>
           </div>
@@ -97,8 +97,8 @@ export default function HomePage() {
             />
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/55 via-slate-900/10 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
-            <Badge className="bg-white/95 text-slate-900 hover:bg-white">
+          <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6">
+            <Badge className="bg-white/95 text-slate-900 whitespace-normal hover:bg-white">
               Dream school planning • Scholarship outcomes • Human mentorship
             </Badge>
           </div>
@@ -134,7 +134,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="grid gap-6 rounded-2xl border bg-white p-6 md:p-8 lg:grid-cols-[1.1fr_0.9fr]">
+      <section className="grid gap-6 rounded-2xl border bg-white p-5 md:p-8 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-4">
           <h2 className="text-2xl font-black tracking-tight md:text-3xl">Why AdmitConnect works for cost-conscious families</h2>
           <div className="grid gap-3">

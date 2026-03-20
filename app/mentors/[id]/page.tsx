@@ -135,15 +135,15 @@ export default function MentorProfilePage({ params }: { params: { id: string } }
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10">
+    <div className="mx-auto w-full max-w-6xl px-4 py-7 md:py-10">
       <Link href="/mentors" className="text-muted-foreground text-sm hover:underline">
         ← Back to tutors
       </Link>
 
-      <Card className="mt-5 bg-white">
+      <Card className="mt-4 md:mt-5 bg-white">
         <CardHeader className="grid gap-5 border-b pb-6">
-          <CardTitle className="text-4xl font-black tracking-tight">{tutor.fullName}</CardTitle>
-          <p className="text-muted-foreground text-lg leading-8">
+          <CardTitle className="text-3xl font-black tracking-tight sm:text-4xl">{tutor.fullName}</CardTitle>
+          <p className="text-muted-foreground text-base leading-7 sm:text-lg sm:leading-8">
             {tutor.school} · {tutor.major}
           </p>
           <div className="flex flex-wrap gap-2">
@@ -176,11 +176,11 @@ export default function MentorProfilePage({ params }: { params: { id: string } }
                       {new Date(slot.startTimeUtc).toLocaleString([], { timeZone: zone })} →{" "}
                       {new Date(slot.endTimeUtc).toLocaleTimeString([], { timeZone: zone })}
                     </p>
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
                       <Button
                         disabled={viewer?.role !== "student"}
                         onClick={() => bookSlot(slot.id)}
-                        className="bg-blue-600 font-semibold text-white hover:bg-blue-700"
+                        className="h-11 w-full bg-blue-600 font-semibold text-white hover:bg-blue-700 sm:h-10 sm:w-auto"
                       >
                         Book this slot
                       </Button>
